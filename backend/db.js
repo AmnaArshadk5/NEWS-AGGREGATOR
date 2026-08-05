@@ -139,11 +139,13 @@ async function initializePgTables() {
         password_hash TEXT NOT NULL,
         role VARCHAR(50) DEFAULT 'user',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
+      )
+    `);
 
+    await pgPool.query(`
       CREATE TABLE IF NOT EXISTS bookmarks (
         id SERIAL PRIMARY KEY,
-        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        user_id INTEGER NOT NULL,
         title TEXT NOT NULL,
         description TEXT,
         url TEXT NOT NULL,
@@ -153,8 +155,10 @@ async function initializePgTables() {
         author TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(user_id, url)
-      );
+      )
+    `);
 
+    await pgPool.query(`
       CREATE TABLE IF NOT EXISTS categories (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
@@ -162,7 +166,7 @@ async function initializePgTables() {
         enabled INTEGER DEFAULT 1,
         sort_order INTEGER DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
+      )
     `);
 
     // Seed categories if empty
