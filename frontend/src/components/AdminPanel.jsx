@@ -4,12 +4,13 @@ import { API_BASE_URL } from '../config';
 import { 
   Users, FolderTree, BarChart3, Shield, Trash2, 
   UserCheck, UserX, Plus, Power, Loader2, Search,
-  TrendingUp, Activity, LogOut, Sun, Moon
+  TrendingUp, Activity, LogOut, Sun, Moon, Menu, X
 } from 'lucide-react';
 
 export default function AdminPanel({ onCategoriesUpdated }) {
   const { token, user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('stats');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Night Mode / Dark Theme state
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -327,7 +328,55 @@ export default function AdminPanel({ onCategoriesUpdated }) {
               <span>Sign Out</span>
             </button>
           </div>
+
+          {/* Mobile Hamburger Toggle Button */}
+          <button
+            className="mobile-hamburger-btn"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle Admin Menu"
+          >
+            {mobileMenuOpen ? <X size={22} color="var(--text-primary)" /> : <Menu size={22} color="var(--text-primary)" />}
+          </button>
         </div>
+
+        {/* ── Mobile Admin Navigation Drawer ── */}
+        {mobileMenuOpen && (
+          <div className="mobile-nav-drawer">
+            <div className="mobile-menu-items">
+              <div className="mobile-user-card">
+                <div className="mobile-user-avatar">
+                  {user?.username?.charAt(0).toUpperCase()}
+                </div>
+                <div className="mobile-user-details">
+                  <span className="mobile-user-name">{user?.username}</span>
+                  <span className="mobile-user-role">ADMINISTRATOR</span>
+                </div>
+              </div>
+
+              {tabs.map((tab) => (
+                <button
+                  key={`mob-${tab.id}`}
+                  onClick={() => { setActiveTab(tab.id); setMobileMenuOpen(false); }}
+                  className={`mobile-menu-btn ${activeTab === tab.id ? 'active' : ''}`}
+                >
+                  {tab.icon}
+                  <span>{tab.label}</span>
+                  {tab.count !== undefined && <span className="mobile-badge">{tab.count}</span>}
+                </button>
+              ))}
+
+              <button onClick={toggleTheme} className="mobile-menu-btn">
+                {isDarkMode ? <Sun size={18} color="#fbbf24" /> : <Moon size={18} color="var(--text-secondary)" />}
+                <span>{isDarkMode ? 'Light Theme' : 'Night Mode'}</span>
+              </button>
+
+              <button onClick={logout} className="mobile-menu-btn logout">
+                <LogOut size={18} color="#ef4444" />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
+        )}
         {/* Accent line */}
         <div style={styles.accentLine} />
       </header>

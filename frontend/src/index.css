@@ -438,35 +438,16 @@ table td {
 @media (max-width: 768px) {
   /* Admin Top Bar Flex Flow */
   .admin-top-bar-inner {
-    height: auto !important;
-    padding: 12px 14px !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 12px !important;
-  }
-
-  /* Admin Header Row 2: Tab Navigation Pills (Overview, Users, Categories) */
-  .admin-tab-nav {
-    width: 100% !important;
-    display: flex !important;
+    height: 56px !important;
+    padding: 0 14px !important;
+    flex-direction: row !important;
     align-items: center !important;
     justify-content: space-between !important;
-    gap: 6px !important;
-    overflow-x: auto !important;
-    padding-bottom: 2px !important;
   }
 
-  .admin-tab-nav button {
-    flex: 1 !important;
-    justify-content: center !important;
-    padding: 8px 10px !important;
-    font-size: 0.8rem !important;
-  }
-
-  /* Admin Header Controls */
-  .admin-top-bar-right {
-    width: 100% !important;
-    justify-content: space-between !important;
+  /* Hide desktop tabs & right controls in top bar on mobile */
+  .admin-tab-nav, .admin-top-bar-right {
+    display: none !important;
   }
 
   /* Stats Grid Layout on Mobile Phones */
