@@ -1,8 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import { API_BASE_URL } from '../config';
 
 const AuthContext = createContext(null);
-
-const API_BASE_URL = 'http://localhost:5000/api';
 
 // Decode JWT payload without a library — just base64 decode the middle part
 function isTokenExpired(token) {

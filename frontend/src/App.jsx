@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from './context/AuthContext';
+import { API_BASE_URL } from './config';
 import Navbar from './components/Navbar';
 import NewsCard from './components/NewsCard';
 import AuthModal from './components/AuthModal';

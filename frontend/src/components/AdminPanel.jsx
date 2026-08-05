@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE_URL } from '../config';
 import { 
   Users, FolderTree, BarChart3, Shield, Trash2, 
   UserCheck, UserX, Plus, Power, Loader2, Search,
   TrendingUp, Activity, LogOut, Sun, Moon
 } from 'lucide-react';
-
-const API_BASE_URL = 'http://localhost:5000/api';
 
 export default function AdminPanel({ onCategoriesUpdated }) {
   const { token, user, logout } = useAuth();

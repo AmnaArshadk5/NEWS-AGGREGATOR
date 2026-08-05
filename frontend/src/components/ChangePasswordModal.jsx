@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE_URL } from '../config';
 import { X, Lock, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
-
-const API_BASE_URL = 'http://localhost:5000/api';
 
 export default function ChangePasswordModal({ isOpen, onClose }) {
   const { token } = useAuth();

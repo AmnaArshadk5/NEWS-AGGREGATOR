@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { X, ExternalLink, Bookmark, Clock, User, Share2, Check, BookOpen, Loader, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-
-const API_BASE = 'http://localhost:5000/api';
+import { API_BASE_URL as API_BASE } from '../config';
 
 export default function ArticleModal({ article, isOpen, onClose, onProgressUpdate }) {
   const title       = article?.title       || 'Untitled Article';
