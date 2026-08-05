@@ -4,13 +4,26 @@ const AuthContext = createContext(null);
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
+// Decode JWT payload without a library — just base64 decode the middle part
+function isTokenExpired(token) {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.exp * 1000 < Date.now();
+  } catch {
+    return true; // treat malformed tokens as expired
+  }
+}
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('news_auth_token') || null);
   const [bookmarks, setBookmarks] = useState([]);
   const [isLoadingBookmarks, setIsLoadingBookmarks] = useState(false);
   const [authError, setAuthError] = useState(null);
+  const [sessionNotice, setSessionNotice] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // (Inactivity auto-logout removed — token TTL of 7 days handles session expiry)
 
   // Validate stored token on mount
   useEffect(() => {
@@ -19,24 +32,34 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
         return;
       }
+
+      // 1. Check expiry client-side first — avoids a 403 network request entirely
+      if (isTokenExpired(token)) {
+        localStorage.removeItem('news_auth_token');
+        setToken(null);
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      // 2. Token looks valid — confirm with the server
       try {
         const response = await fetch(`${API_BASE_URL}/auth/me`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          headers: { 'Authorization': `Bearer ${token}` }
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           setUser(data.user);
-          // Fetch user bookmarks
           fetchBookmarks(token);
         } else {
-          // Token expired or invalid
-          logout();
+          // Server rejected it (e.g. JWT_SECRET changed) — clear silently
+          localStorage.removeItem('news_auth_token');
+          setToken(null);
+          setUser(null);
         }
       } catch (err) {
-        console.error('Error verifying token:', err);
+        console.warn('Could not verify auth token (network issue):', err.message);
       } finally {
         setLoading(false);
       }
@@ -69,6 +92,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     setAuthError(null);
+    setSessionNotice(null);
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
@@ -95,6 +119,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (username, password) => {
     setAuthError(null);
+    setSessionNotice(null);
     try {
       const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
@@ -111,7 +136,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('news_auth_token', data.token);
       setToken(data.token);
       setUser(data.user);
-      setBookmarks([]); // New user has no bookmarks
+      setBookmarks([]);
       return true;
     } catch (err) {
       setAuthError(err.message);
@@ -119,12 +144,15 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = (noticeReason = null) => {
     localStorage.removeItem('news_auth_token');
     setToken(null);
     setUser(null);
     setBookmarks([]);
     setAuthError(null);
+    if (noticeReason) {
+      setSessionNotice(noticeReason);
+    }
   };
 
   const toggleBookmark = async (article) => {
@@ -136,7 +164,6 @@ export const AuthProvider = ({ children }) => {
 
     try {
       if (isExisting) {
-        // Remove bookmark
         const response = await fetch(`${API_BASE_URL}/bookmarks`, {
           method: 'DELETE',
           headers: {
@@ -151,7 +178,6 @@ export const AuthProvider = ({ children }) => {
           return { success: true, action: 'removed' };
         }
       } else {
-        // Add bookmark
         const response = await fetch(`${API_BASE_URL}/bookmarks`, {
           method: 'POST',
           headers: {
@@ -170,7 +196,6 @@ export const AuthProvider = ({ children }) => {
         });
 
         if (response.ok) {
-          // Add locally to state
           const newBookmark = {
             title: article.title,
             description: article.description,
@@ -201,13 +226,15 @@ export const AuthProvider = ({ children }) => {
       bookmarks,
       isLoadingBookmarks,
       authError,
+      sessionNotice,
       loading,
       login,
       register,
       logout,
       toggleBookmark,
       isBookmarked,
-      setAuthError
+      setAuthError,
+      setSessionNotice
     }}>
       {children}
     </AuthContext.Provider>

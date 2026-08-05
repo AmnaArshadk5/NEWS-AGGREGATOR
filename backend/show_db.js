@@ -29,14 +29,19 @@ async function showData() {
     
     // 1. Show Users
     console.log('\n👥 REGISTERED USERS:');
-    const users = await query('SELECT id, username, created_at FROM users');
+    const users = await query('SELECT id, username, role, created_at FROM users');
     if (users.length === 0) {
       console.log('No users found in database.');
     } else {
       console.table(users);
     }
 
-    // 2. Show Bookmarks
+    // 2. Show Categories
+    console.log('\n📁 CATEGORIES:');
+    const categories = await query('SELECT id, name, slug, enabled, sort_order FROM categories');
+    console.table(categories);
+
+    // 3. Show Bookmarks
     console.log('\n🔖 BOOKMARKED ARTICLES:');
     const bookmarks = await query('SELECT id, user_id, title, source_name, url FROM bookmarks');
     if (bookmarks.length === 0) {

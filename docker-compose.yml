@@ -1,0 +1,47 @@
+services:
+  # 1. PostgreSQL Database Container
+  postgres_db:
+    image: postgres:16-alpine
+    container_name: news_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: news_aggregator
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # 2. Express Backend API Container
+  backend:
+    build: ./backend
+    container_name: news_backend
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      PORT: 5000
+      USE_POSTGRES: "true"
+      PG_HOST: postgres_db
+      PG_PORT: 5432
+      PG_USER: postgres
+      PG_PASSWORD: password123
+      PG_DATABASE: news_aggregator
+      JWT_SECRET: super_secret_production_key_2026
+      NEWSDATA_API_KEY: pub_eeddbe15580b4a329269dd0227d0a423
+    depends_on:
+      - postgres_db
+
+  # 3. React Frontend Container
+  frontend:
+    build: ./frontend
+    container_name: news_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

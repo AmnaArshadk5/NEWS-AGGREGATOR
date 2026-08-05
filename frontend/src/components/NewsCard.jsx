@@ -1,17 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Bookmark, Clock, User, ArrowUpRight } from 'lucide-react';
+import { Bookmark, Clock, User, BookOpen, CheckCircle2 } from 'lucide-react';
+import ArticleModal from './ArticleModal';
 
-export default function NewsCard({ article, onRequireAuth }) {
-  const { toggleBookmark, isBookmarked } = useAuth();
+// NewsCard component with reading progress tracking
+export default function NewsCard({ article = {}, onRequireAuth }) {
+  const { user, toggleBookmark, isBookmarked } = useAuth();
+  const userId = user?.id ? user.id : 'guest';
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const title = article.title;
-  const description = article.description || '';
-  const url = article.url;
-  const urlToImage = article.urlToImage || article.url_to_image;
-  const publishedAt = article.publishedAt || article.published_at;
-  const sourceName = article.source?.name || article.source_name || 'News Source';
-  const author = article.author;
+  const title = article?.title || 'Untitled';
+  const description = article?.description || '';
+  const url = article?.url || '';
+  const urlToImage = article?.urlToImage || article?.url_to_image;
+  const publishedAt = article?.publishedAt || article?.published_at;
+  const sourceName = article?.source?.name || article?.source_name || 'News Source';
+  const author = article?.author;
+
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    if (url) {
+      const saved = localStorage.getItem(`progress_${userId}_${url}`);
+      if (saved) setProgress(parseInt(saved, 10));
+      else setProgress(0);
+    }
+  }, [url, userId]);
 
   const bookmarked = isBookmarked(url);
 
@@ -32,6 +46,10 @@ export default function NewsCard({ article, onRequireAuth }) {
     if (res && res.requireAuth) {
       onRequireAuth();
     }
+  };
+
+  const handleProgressUpdate = (pct) => {
+    setProgress(pct);
   };
 
   const formatDate = (dateStr) => {
@@ -66,94 +84,136 @@ export default function NewsCard({ article, onRequireAuth }) {
     }
   };
 
-  const imageSrc =
-    urlToImage ||
-    'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=800';
+  const PROXY_BASE = 'http://localhost:5000/api/proxy/image?url=';
+  const getProxiedImage = (src) => {
+    if (!src) return 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=800';
+    if (src.startsWith(PROXY_BASE) || src.startsWith('data:') || src.includes('unsplash.com')) return src;
+    return `${PROXY_BASE}${encodeURIComponent(src)}`;
+  };
+
+  const imageSrc = getProxiedImage(urlToImage);
+
+  const handleOpenReader = (e) => {
+    if (e) e.preventDefault();
+    setIsModalOpen(true);
+  };
 
   return (
-    <article style={styles.card}>
-      {/* Image */}
-      <a href={url || '#'} target="_blank" rel="noopener noreferrer" style={styles.imageLink}>
-        <div style={styles.imageWrap}>
-          <img
-            src={imageSrc}
-            alt={title}
-            style={styles.image}
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src =
-                'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=800';
-            }}
-          />
-        </div>
-      </a>
-
-      {/* Content */}
-      <div style={styles.content}>
-        {/* Source + Date row */}
-        <div style={styles.metaRow}>
-          <span className="badge badge-accent">{sourceName}</span>
-          <div style={styles.timeRow}>
-            <Clock size={12} style={{ color: 'var(--text-muted)' }} />
-            <span style={styles.timeText}>{getTimeAgo(publishedAt)}</span>
+    <>
+      <article style={styles.card}>
+        {/* Image */}
+        <div style={styles.imageLink} onClick={handleOpenReader}>
+          <div style={styles.imageWrap}>
+            <img
+              src={imageSrc}
+              alt={title}
+              style={styles.image}
+              referrerPolicy="no-referrer"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src =
+                  'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=800';
+              }}
+            />
           </div>
         </div>
 
-        {/* Title */}
-        <a href={url || '#'} target="_blank" rel="noopener noreferrer" style={styles.titleLink}>
-          <h3 style={styles.title}>{title}</h3>
-        </a>
+        {/* Content */}
+        <div style={styles.content}>
+          {/* Source + Date row */}
+          <div style={styles.metaRow}>
+            <span className="badge badge-accent">{sourceName}</span>
+            <div style={styles.timeRow}>
+              <Clock size={12} style={{ color: 'var(--text-muted)' }} />
+              <span style={styles.timeText}>{getTimeAgo(publishedAt)}</span>
+            </div>
+          </div>
 
-        {/* Description */}
-        <p style={styles.description}>
-          {description.length > 140
-            ? `${description.slice(0, 140)}…`
-            : description || 'No summary available for this article.'}
-        </p>
+          {/* Title */}
+          <div style={styles.titleLink} onClick={handleOpenReader}>
+            <h3 style={styles.title}>{title}</h3>
+          </div>
 
-        {/* Footer */}
-        <div style={styles.footer}>
-          <div style={styles.footerLeft}>
-            {author && (
-              <div style={styles.authorRow}>
-                <div style={styles.authorAvatar}>
-                  <User size={11} color="#fff" />
+          {/* Description */}
+          <p style={{ cursor: 'pointer', ...styles.description }} onClick={handleOpenReader}>
+            {description.length > 140
+              ? `${description.slice(0, 140)}…`
+              : description || 'No summary available for this article.'}
+          </p>
+
+          {/* Footer */}
+          <div style={styles.footer}>
+            <div style={styles.footerLeft}>
+              {author && (
+                <div style={styles.authorRow}>
+                  <div style={styles.authorAvatar}>
+                    <User size={11} color="#fff" />
+                  </div>
+                  <span style={styles.authorName}>{author}</span>
                 </div>
-                <span style={styles.authorName}>{author}</span>
+              )}
+            </div>
+
+            <div style={styles.footerRight}>
+              <button
+                onClick={handleBookmarkClick}
+                style={{
+                  ...styles.bookmarkBtn,
+                  color: bookmarked ? 'var(--accent-primary)' : 'var(--text-muted)',
+                }}
+                title={bookmarked ? 'Remove from saved' : 'Save article'}
+              >
+                <Bookmark size={16} fill={bookmarked ? 'var(--accent-primary)' : 'none'} />
+              </button>
+
+              <button
+                onClick={handleOpenReader}
+                style={styles.readLink}
+                title="Read full article"
+              >
+                <span>Read Story</span>
+                <BookOpen size={13} />
+              </button>
+            </div>
+          </div>
+
+          {progress > 0 && (
+            <div style={styles.progressSection}>
+              <div style={styles.progressHeader}>
+                {progress === 100 ? (
+                  <span style={styles.completedBadge}>
+                    <CheckCircle2 size={13} color="var(--accent-success)" />
+                    <span>100% Completed</span>
+                  </span>
+                ) : (
+                  <span style={styles.inProgressBadge}>
+                    <Clock size={12} color="var(--accent-primary)" />
+                    <span>{progress}% Read</span>
+                  </span>
+                )}
               </div>
-            )}
-          </div>
-
-          <div style={styles.footerRight}>
-            <button
-              onClick={handleBookmarkClick}
-              style={{
-                ...styles.bookmarkBtn,
-                color: bookmarked ? 'var(--accent-primary)' : 'var(--text-muted)',
-              }}
-              title={bookmarked ? 'Remove from saved' : 'Save article'}
-            >
-              <Bookmark size={16} fill={bookmarked ? 'var(--accent-primary)' : 'none'} />
-            </button>
-
-            <a
-              href={url || '#'}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={styles.readLink}
-              onClick={(e) => {
-                if (!url || url === '#') {
-                  e.preventDefault();
-                }
-              }}
-            >
-              <span>Read</span>
-              <ArrowUpRight size={13} />
-            </a>
-          </div>
+              <div style={styles.progressTrack}>
+                <div
+                  style={{
+                    ...styles.progressFill,
+                    width: `${progress}%`,
+                    backgroundColor: progress === 100 ? 'var(--accent-success)' : 'var(--accent-primary)',
+                  }}
+                />
+              </div>
+            </div>
+          )}
         </div>
-      </div>
-    </article>
+      </article>
+
+      {/* In-App Reader Modal */}
+      <ArticleModal
+        article={article}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onProgressUpdate={handleProgressUpdate}
+      />
+    </>
   );
 }
 
@@ -172,6 +232,7 @@ const styles = {
   imageLink: {
     display: 'block',
     textDecoration: 'none',
+    cursor: 'pointer',
   },
   imageWrap: {
     width: '100%',
@@ -211,6 +272,7 @@ const styles = {
   titleLink: {
     textDecoration: 'none',
     color: 'inherit',
+    cursor: 'pointer',
   },
   title: {
     fontFamily: "'Lora', Georgia, serif",
@@ -296,5 +358,45 @@ const styles = {
     borderRadius: 'var(--radius-sm)',
     border: '1px solid var(--border-light)',
     transition: 'all 0.15s ease',
+  },
+  progressSection: {
+    marginTop: '12px',
+    paddingTop: '10px',
+    borderTop: '1px solid var(--border-light)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+  },
+  progressHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    fontSize: '0.78rem',
+  },
+  completedBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '5px',
+    color: 'var(--accent-success)',
+    fontWeight: '700',
+  },
+  inProgressBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '5px',
+    color: 'var(--text-secondary)',
+    fontWeight: '600',
+  },
+  progressTrack: {
+    width: '100%',
+    height: '5px',
+    backgroundColor: 'var(--bg-input)',
+    borderRadius: '9999px',
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: '9999px',
+    transition: 'width 0.4s ease',
   },
 };

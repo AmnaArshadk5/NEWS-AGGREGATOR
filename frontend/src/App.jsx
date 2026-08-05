@@ -3,18 +3,22 @@ import { useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import NewsCard from './components/NewsCard';
 import AuthModal from './components/AuthModal';
+import AdminPanel from './components/AdminPanel';
+import LandingPage from './components/LandingPage';
+import ChangePasswordModal from './components/ChangePasswordModal';
+import ReadingProgressPage from './components/ReadingProgressPage';
 import { RefreshCw, Newspaper, AlertTriangle, SlidersHorizontal, Zap, Clock } from 'lucide-react';
 
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
-const CATEGORIES = [
-  { id: 'general', label: 'General' },
-  { id: 'technology', label: 'Technology' },
-  { id: 'business', label: 'Business' },
-  { id: 'sports', label: 'Sports' },
-  { id: 'entertainment', label: 'Entertainment' },
-  { id: 'health', label: 'Health' },
-  { id: 'science', label: 'Science' },
+const DEFAULT_CATEGORIES = [
+  { id: 1, name: 'General', slug: 'general' },
+  { id: 2, name: 'Technology', slug: 'technology' },
+  { id: 3, name: 'Business', slug: 'business' },
+  { id: 4, name: 'Sports', slug: 'sports' },
+  { id: 5, name: 'Entertainment', slug: 'entertainment' },
+  { id: 6, name: 'Health', slug: 'health' },
+  { id: 7, name: 'Science', slug: 'science' },
 ];
 
 const SORT_OPTIONS = [
@@ -29,117 +33,255 @@ const TIMEFRAME_OPTIONS = [
   { value: 'month', label: 'Past Month' },
 ];
 
+const currentYear = new Date().getFullYear();
 const YEAR_OPTIONS = [
   { value: '', label: 'All Years' },
-  { value: '2026', label: '2026' },
-  { value: '2025', label: '2025' },
-  { value: '2024', label: '2024' },
+  ...Array.from({ length: currentYear - 2014 }, (_, i) => {
+    const y = String(currentYear - i);
+    return { value: y, label: y };
+  }),
+];
+
+const COUNTRY_OPTIONS = [
+  { value: '', label: '🌍 All Countries' },
+  { value: 'au', label: '🇦🇺 Australia' },
+  { value: 'at', label: '🇦🇹 Austria' },
+  { value: 'be', label: '🇧🇪 Belgium' },
+  { value: 'br', label: '🇧🇷 Brazil' },
+  { value: 'bg', label: '🇧🇬 Bulgaria' },
+  { value: 'ca', label: '🇨🇦 Canada' },
+  { value: 'cn', label: '🇨🇳 China' },
+  { value: 'co', label: '🇨🇴 Colombia' },
+  { value: 'cu', label: '🇨🇺 Cuba' },
+  { value: 'cz', label: '🇨🇿 Czech Republic' },
+  { value: 'eg', label: '🇪🇬 Egypt' },
+  { value: 'fr', label: '🇫🇷 France' },
+  { value: 'de', label: '🇩🇪 Germany' },
+  { value: 'gr', label: '🇬🇷 Greece' },
+  { value: 'hk', label: '🇭🇰 Hong Kong' },
+  { value: 'hu', label: '🇭🇺 Hungary' },
+  { value: 'in', label: '🇮🇳 India' },
+  { value: 'id', label: '🇮🇩 Indonesia' },
+  { value: 'ie', label: '🇮🇪 Ireland' },
+  { value: 'il', label: '🇮🇱 Israel' },
+  { value: 'it', label: '🇮🇹 Italy' },
+  { value: 'jp', label: '🇯🇵 Japan' },
+  { value: 'lv', label: '🇱🇻 Latvia' },
+  { value: 'lt', label: '🇱🇹 Lithuania' },
+  { value: 'my', label: '🇲🇾 Malaysia' },
+  { value: 'mx', label: '🇲🇽 Mexico' },
+  { value: 'ma', label: '🇲🇦 Morocco' },
+  { value: 'nl', label: '🇳🇱 Netherlands' },
+  { value: 'nz', label: '🇳🇿 New Zealand' },
+  { value: 'ng', label: '🇳🇬 Nigeria' },
+  { value: 'no', label: '🇳🇴 Norway' },
+  { value: 'pk', label: '🇵🇰 Pakistan' },
+  { value: 'pe', label: '🇵🇪 Peru' },
+  { value: 'ph', label: '🇵🇭 Philippines' },
+  { value: 'pl', label: '🇵🇱 Poland' },
+  { value: 'pt', label: '🇵🇹 Portugal' },
+  { value: 'ro', label: '🇷🇴 Romania' },
+  { value: 'ru', label: '🇷🇺 Russia' },
+  { value: 'sa', label: '🇸🇦 Saudi Arabia' },
+  { value: 'rs', label: '🇷🇸 Serbia' },
+  { value: 'sg', label: '🇸🇬 Singapore' },
+  { value: 'sk', label: '🇸🇰 Slovakia' },
+  { value: 'si', label: '🇸🇮 Slovenia' },
+  { value: 'za', label: '🇿🇦 South Africa' },
+  { value: 'kr', label: '🇰🇷 South Korea' },
+  { value: 'se', label: '🇸🇪 Sweden' },
+  { value: 'ch', label: '🇨🇭 Switzerland' },
+  { value: 'tw', label: '🇹🇼 Taiwan' },
+  { value: 'th', label: '🇹🇭 Thailand' },
+  { value: 'tr', label: '🇹🇷 Turkey' },
+  { value: 'ua', label: '🇺🇦 Ukraine' },
+  { value: 'ae', label: '🇦🇪 UAE' },
+  { value: 'gb', label: '🇬🇧 United Kingdom' },
+  { value: 'us', label: '🇺🇸 United States' },
+  { value: 've', label: '🇻🇪 Venezuela' },
 ];
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
 export default function App() {
-  const { user, bookmarks, isLoadingBookmarks } = useAuth();
+  const { user, bookmarks, isLoadingBookmarks, sessionNotice, setSessionNotice } = useAuth();
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Dynamic Categories from Backend API
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
+
   // Per-user 5-min client-side cache
-  // Structure: { [cacheKey]: { data: [], timestamp: number, userId: string|null } }
   const newsCache = useRef({});
-  const [cacheStatus, setCacheStatus] = useState(null); // { fromCache: bool, expiresAt: number }
+  const [cacheStatus, setCacheStatus] = useState(null);
   const prevUserId = useRef(user?.id ?? null);
 
-  // Clear cache whenever the logged-in user changes (login / logout)
+  // Clear cache & reset views to home whenever the logged-in user changes (login / logout)
   useEffect(() => {
     const currentId = user?.id ?? null;
     if (prevUserId.current !== currentId) {
       newsCache.current = {};
       setCacheStatus(null);
+      setShowBookmarksOnly(false);
+      setShowProgressOnly(false);
+      setSearchQuery('');
       prevUserId.current = currentId;
     }
   }, [user]);
 
-  // Filters
-  const [selectedCategory, setSelectedCategory] = useState('general');
+  // Fetch Public Categories from Backend API
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/categories`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.length > 0) {
+          setCategories(data);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading public categories:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  // Set default category when categories are loaded
+  useEffect(() => {
+    if (categories.length > 0 && !selectedCategory) {
+      setSelectedCategory(categories[0].slug);
+    }
+  }, [categories, selectedCategory]);
+
+  // Ensure selectedCategory always points to an existing category
+  useEffect(() => {
+    const exists = categories.some(cat => cat.slug === selectedCategory);
+    if (!exists && categories.length > 0) {
+      setSelectedCategory(categories[0].slug);
+    }
+  }, [categories, selectedCategory]);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('newest');
   const [timeframe, setTimeframe] = useState('all');
   const [year, setYear] = useState('');
+const [selectedCountry, setSelectedCountry] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
   // Bookmarks panel toggle
   const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
+  const [showProgressOnly, setShowProgressOnly] = useState(false);
 
-  // Auth Modal State
+  // Calculate incomplete progress count from localStorage for logged-in user
+  const getInProgressCount = () => {
+    const userId = user?.id ? user.id : 'guest';
+    const prefix = `progress_${userId}_`;
+    let count = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(prefix) && !key.startsWith(`progress_article_${userId}_`)) {
+        const val = parseInt(localStorage.getItem(key) || '0', 10);
+        if (val > 0 && val < 100) count++;
+      }
+    }
+    return count;
+  };
+
+  // View State ('home' or 'admin')
+  const [currentView, setCurrentView] = useState('home');
+
+  // Modal States
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
   // Build a deterministic cache key from the current user + query params
   const buildCacheKey = useCallback(() => {
-    const uid = user?.id ?? 'guest';
-    return `${uid}::${selectedCategory}::${searchQuery}::${sortBy}::${year}::${timeframe}`;
-  }, [user, selectedCategory, searchQuery, sortBy, year, timeframe]);
+  const uid = user?.id ?? 'guest';
+  return `${uid}::${selectedCategory}::${searchQuery}::${sortBy}::${year}::${timeframe}::${selectedCountry}`;
+}, [user, selectedCategory, searchQuery, sortBy, year, timeframe, selectedCountry]);
 
-  // Fetch news — checks 5-min per-user cache first
-  const fetchNews = useCallback(async (forceRefresh = false) => {
-    if (showBookmarksOnly) return;
+// Fetch news — checks 5-min per-user cache first
+const fetchNews = useCallback(async (forceRefresh = false) => {
+  if (showBookmarksOnly || showProgressOnly) return;
 
-    const cacheKey = buildCacheKey();
-    const cached = newsCache.current[cacheKey];
-    const now = Date.now();
+  // If no category selected yet, set to first available and skip this call (will re-trigger via effect)
+  if (!selectedCategory) {
+    if (categories.length > 0) {
+      setSelectedCategory(categories[0].slug);
+    }
+    return;
+  }
 
-    // Serve from cache if valid and not a forced refresh
-    if (!forceRefresh && cached && now - cached.timestamp < CACHE_TTL_MS) {
-      setArticles(cached.data);
-      setCacheStatus({ fromCache: true, expiresAt: cached.timestamp + CACHE_TTL_MS });
-      return;
+  const cacheKey = buildCacheKey();
+  const cached = newsCache.current[cacheKey];
+  const now = Date.now();
+
+  // Serve from cache if valid and not a forced refresh
+  if (!forceRefresh && cached && now - cached.timestamp < CACHE_TTL_MS) {
+    setArticles(cached.data);
+    setCacheStatus({ fromCache: true, expiresAt: cached.timestamp + CACHE_TTL_MS });
+    return;
+  }
+
+  setLoading(true);
+  setError(null);
+  setCacheStatus(null);
+  try {
+    const params = new URLSearchParams();
+    if (selectedCategory) params.set('category', selectedCategory);
+    if (searchQuery) params.set('q', searchQuery);
+    if (sortBy) params.set('sortBy', sortBy);
+    if (year) params.set('year', year);
+    if (timeframe) params.set('timeframe', timeframe);
+    if (selectedCountry) params.set('country', selectedCountry);
+
+    const response = await fetch(`${API_BASE_URL}/news?${params.toString()}`);
+
+    if (!response.ok) {
+      throw new Error('Failed to retrieve news. Please ensure the server is running.');
     }
 
-    setLoading(true);
-    setError(null);
-    setCacheStatus(null);
-    try {
-      const params = new URLSearchParams();
-      if (selectedCategory) params.set('category', selectedCategory);
-      if (searchQuery) params.set('q', searchQuery);
-      if (sortBy) params.set('sortBy', sortBy);
-      if (year) params.set('year', year);
-      if (timeframe) params.set('timeframe', timeframe);
+    const data = await response.json();
 
-      const response = await fetch(`${API_BASE_URL}/news?${params.toString()}`);
-
-      if (!response.ok) {
-        throw new Error('Failed to retrieve news. Please ensure the server is running.');
-      }
-
-      const data = await response.json();
-
-      // Store in per-user cache
-      newsCache.current[cacheKey] = { data, timestamp: Date.now(), userId: user?.id ?? 'guest' };
-      setArticles(data);
-      setCacheStatus({ fromCache: false, expiresAt: Date.now() + CACHE_TTL_MS });
-    } catch (err) {
-      console.error(err);
-      setError(err.message || 'An error occurred while fetching news.');
-    } finally {
-      setLoading(false);
-    }
-  }, [showBookmarksOnly, buildCacheKey, selectedCategory, searchQuery, sortBy, year, timeframe, user]);
+    // Store in per-user cache
+    newsCache.current[cacheKey] = { data, timestamp: Date.now(), userId: user?.id ?? 'guest' };
+    setArticles(data);
+    setCacheStatus({ fromCache: false, expiresAt: Date.now() + CACHE_TTL_MS });
+  } catch (err) {
+    console.error(err);
+    setError(err.message || 'An error occurred while fetching news.');
+  } finally {
+    setLoading(false);
+  }
+}, [showBookmarksOnly, buildCacheKey, selectedCategory, searchQuery, sortBy, year, timeframe, selectedCountry, user]);
 
   useEffect(() => {
     fetchNews();
-  }, [selectedCategory, searchQuery, showBookmarksOnly, sortBy, year, timeframe]);
+  }, [selectedCategory, searchQuery, showBookmarksOnly, sortBy, year, timeframe, selectedCountry, fetchNews]);
 
-  const handleCategorySelect = (category) => {
-    setSelectedCategory(category);
+  const handleCategorySelect = (categorySlug) => {
+    setShowProgressOnly(false);
+    setShowBookmarksOnly(false);
+    setSelectedCategory(categorySlug);
   };
 
   const handleSearch = (query) => {
+    setShowProgressOnly(false);
+    setShowBookmarksOnly(false);
     setSearchQuery(query);
   };
 
   const toggleBookmarksView = () => {
+    setShowProgressOnly(false);
     setShowBookmarksOnly(!showBookmarksOnly);
+  };
+
+  const toggleProgressView = () => {
+    setShowBookmarksOnly(false);
+    setShowProgressOnly(!showProgressOnly);
   };
 
   const getDisplayArticles = () => {
@@ -164,7 +306,6 @@ export default function App() {
       );
     }
 
-    // Apply year filter locally for bookmarks
     if (year) {
       const y = parseInt(year, 10);
       filtered = filtered.filter((art) => {
@@ -174,7 +315,6 @@ export default function App() {
       });
     }
 
-    // Apply timeframe filter locally for bookmarks
     if (timeframe && timeframe !== 'all') {
       const now = Date.now();
       let cutoff;
@@ -190,7 +330,6 @@ export default function App() {
       }
     }
 
-    // Apply sort locally for bookmarks
     filtered.sort((a, b) => {
       const da = new Date(a.publishedAt || 0);
       const db = new Date(b.publishedAt || 0);
@@ -201,7 +340,7 @@ export default function App() {
   };
 
   const displayArticles = getDisplayArticles();
-  const activeFilterCount = [year, timeframe !== 'all' ? timeframe : '', sortBy !== 'newest' ? sortBy : ''].filter(Boolean).length;
+  const activeFilterCount = [year, timeframe !== 'all' ? timeframe : '', sortBy !== 'newest' ? sortBy : '', selectedCountry].filter(Boolean).length;
 
   const currentDate = new Date().toLocaleDateString(undefined, {
     weekday: 'long',
@@ -210,17 +349,72 @@ export default function App() {
     day: 'numeric',
   });
 
+  // -------------------------------------------------------------
+  // ROLE-BASED ROUTING
+  // -------------------------------------------------------------
+
+  if (!user) {
+    return (
+      <>
+        <LandingPage onLoginClick={() => setIsAuthModalOpen(true)} />
+        <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+      </>
+    );
+  }
+
+  if (user.role === 'admin') {
+    return (
+      <>
+        <AdminPanel onCategoriesUpdated={fetchCategories} />
+        <ChangePasswordModal 
+          isOpen={isChangePasswordOpen} 
+          onClose={() => setIsChangePasswordOpen(false)} 
+        />
+      </>
+    );
+  }
+
+  // STANDARD USER LAYOUT
+  const resetHome = () => {
+    setShowBookmarksOnly(false);
+    setShowProgressOnly(false);
+    setSearchQuery('');
+    if (categories.length > 0) {
+      setSelectedCategory(categories[0].slug);
+    } else {
+      setSelectedCategory('');
+    }
+  };
+
   return (
     <>
       <Navbar
         onSearch={handleSearch}
         onToggleBookmarks={toggleBookmarksView}
         showBookmarksOnly={showBookmarksOnly}
-        openAuthModal={() => setIsAuthModalOpen(true)}
+        onToggleProgress={toggleProgressView}
+        showProgressOnly={showProgressOnly}
+        progressCount={getInProgressCount()}
+        openChangePasswordModal={() => setIsChangePasswordOpen(true)}
+        onGoHome={resetHome}
       />
 
       <main style={styles.main}>
-        <div style={styles.container}>
+        {showProgressOnly ? (
+          <ReadingProgressPage onGoHome={resetHome} />
+        ) : (
+          <div style={styles.container}>
+          {/* Security Session Notice Banner */}
+          {sessionNotice && (
+            <div style={styles.sessionNoticeBanner}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Clock size={16} color="var(--accent-warm)" />
+                <span>{sessionNotice}</span>
+              </div>
+              <button onClick={() => setSessionNotice(null)} style={styles.noticeCloseBtn}>×</button>
+            </div>
+          )}
+
           {/* Page Header */}
           <section style={styles.pageHeader}>
             <div style={styles.headerTop}>
@@ -259,83 +453,74 @@ export default function App() {
               </div>
             </div>
 
-            {/* Category pills */}
+            {/* Dynamic Category pills */}
             {!showBookmarksOnly && (
               <div style={styles.categoryBar} className="hide-scrollbar">
-                {CATEGORIES.map((cat) => (
+                {categories.map((cat) => (
                   <button
-                    key={cat.id}
-                    onClick={() => handleCategorySelect(cat.id)}
+                    key={cat.slug || cat.id}
+                    onClick={() => handleCategorySelect(cat.slug)}
                     style={{
                       ...styles.pill,
-                      ...(selectedCategory === cat.id ? styles.pillActive : {}),
+                      ...(selectedCategory === cat.slug ? styles.pillActive : {}),
                     }}
                   >
-                    {cat.label}
+                    {cat.name}
                   </button>
                 ))}
               </div>
             )}
 
             {/* Expandable Filter Bar */}
-            {showFilters && (
-              <div style={styles.filterBar}>
-                <div style={styles.filterGroup}>
-                  <label style={styles.filterLabel}>Sort By</label>
-                  <select
-                    className="select-field"
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                  >
-                    {SORT_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div style={styles.filterGroup}>
-                  <label style={styles.filterLabel}>Year</label>
-                  <select
-                    className="select-field"
-                    value={year}
-                    onChange={(e) => setYear(e.target.value)}
-                  >
-                    {YEAR_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div style={styles.filterGroup}>
-                  <label style={styles.filterLabel}>Timeframe</label>
-                  <select
-                    className="select-field"
-                    value={timeframe}
-                    onChange={(e) => setTimeframe(e.target.value)}
-                  >
-                    {TIMEFRAME_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                {(year || timeframe !== 'all' || sortBy !== 'newest') && (
-                  <button
-                    onClick={() => {
-                      setYear('');
-                      setTimeframe('all');
-                      setSortBy('newest');
-                    }}
-                    style={styles.clearFiltersBtn}
-                  >
-                    Clear all
-                  </button>
-                )}
-              </div>
-            )}
+                {showFilters && (
+      <div style={styles.filterBar}>
+        <div style={styles.filterGroup}>
+          <label style={styles.filterLabel}>Sort By</label>
+          <CustomSelect
+            value={sortBy}
+            onChange={setSortBy}
+            options={SORT_OPTIONS}
+          />
+        </div>
+        <div style={styles.filterGroup}>
+          <label style={styles.filterLabel}>Year</label>
+          <CustomSelect
+            value={year}
+            onChange={setYear}
+            options={YEAR_OPTIONS}
+          />
+        </div>
+        <div style={styles.filterGroup}>
+          <label style={styles.filterLabel}>Timeframe</label>
+          <CustomSelect
+            value={timeframe}
+            onChange={setTimeframe}
+            options={TIMEFRAME_OPTIONS}
+          />
+        </div>
+        <div style={styles.filterGroup}>
+          <label style={styles.filterLabel}>Country</label>
+          <CountryPicker
+            value={selectedCountry}
+            onChange={setSelectedCountry}
+            options={COUNTRY_OPTIONS}
+          />
+        </div>
+        {(year || timeframe !== 'all' || sortBy !== 'newest' || selectedCountry) && (
+          <button
+            onClick={() => {
+              setYear('');
+              setTimeframe('all');
+              setSortBy('newest');
+              setSelectedCountry('');
+            }}
+            style={styles.clearFiltersBtn}
+          >
+            Clear all
+          </button>
+        )}
+      </div>
+    )}
           </section>
 
           <div style={styles.divider} />
@@ -345,6 +530,7 @@ export default function App() {
             <CacheStatusBar status={cacheStatus} onRefresh={() => fetchNews(true)} />
           )}
 
+          {/* Results count */}
           {!loading && !error && displayArticles.length > 0 && (
             <p style={styles.resultsCount}>
               Showing <strong>{displayArticles.length}</strong> article{displayArticles.length !== 1 ? 's' : ''}
@@ -357,7 +543,7 @@ export default function App() {
               <AlertTriangle size={36} color="var(--accent-warm)" />
               <h3 style={styles.stateTitle}>Unable to load articles</h3>
               <p style={styles.stateText}>{error}</p>
-              <button onClick={fetchNews} className="btn btn-primary">
+              <button onClick={() => fetchNews(true)} className="btn btn-primary">
                 Retry
               </button>
             </div>
@@ -415,10 +601,13 @@ export default function App() {
             </div>
           )}
         </div>
+        )}
       </main>
 
-      {/* Auth Modal */}
-      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+      <ChangePasswordModal 
+        isOpen={isChangePasswordOpen} 
+        onClose={() => setIsChangePasswordOpen(false)} 
+      />
 
       {/* Footer */}
       <footer style={styles.footer}>
@@ -432,6 +621,7 @@ export default function App() {
 
       <style>{`
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateX(-50%) translateY(16px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
         .spinner { animation: spin 1s linear infinite; }
         article:hover { box-shadow: var(--shadow-md) !important; }
         article:hover img { transform: scale(1.03); }
@@ -450,6 +640,27 @@ const styles = {
     maxWidth: '1200px',
     margin: '0 auto',
     padding: '0 28px',
+  },
+  sessionNoticeBanner: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(180, 83, 9, 0.08)',
+    border: '1px solid rgba(180, 83, 9, 0.25)',
+    color: 'var(--accent-warm)',
+    padding: '12px 18px',
+    borderRadius: 'var(--radius-md)',
+    marginTop: '20px',
+    fontSize: '0.88rem',
+    fontWeight: '600',
+  },
+  noticeCloseBtn: {
+    backgroundColor: 'transparent',
+    border: 'none',
+    color: 'var(--accent-warm)',
+    fontSize: '1.2rem',
+    cursor: 'pointer',
+    padding: '0 4px',
   },
   pageHeader: {
     padding: '28px 0 0',
@@ -514,8 +725,10 @@ const styles = {
   pill: {
     padding: '7px 16px',
     borderRadius: 'var(--radius-full)',
-    border: '1px solid var(--border-light)',
-    background: 'var(--bg-card)',
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    borderColor: 'var(--border-light)',
+    backgroundColor: 'var(--bg-card)',
     color: 'var(--text-secondary)',
     fontSize: '0.84rem',
     fontWeight: '600',
@@ -527,6 +740,8 @@ const styles = {
   pillActive: {
     backgroundColor: 'var(--accent-secondary)',
     color: '#fff',
+    borderWidth: '1px',
+    borderStyle: 'solid',
     borderColor: 'var(--accent-secondary)',
   },
   filterBar: {
@@ -553,7 +768,7 @@ const styles = {
     letterSpacing: '0.04em',
   },
   clearFiltersBtn: {
-    background: 'none',
+    backgroundColor: 'transparent',
     border: 'none',
     color: 'var(--accent-primary)',
     fontSize: '0.82rem',
@@ -641,9 +856,7 @@ const styles = {
   },
 };
 
-// ─── CacheStatusBar ───────────────────────────────────────────────────────────
-// Shows a slim indicator below the divider with cache hit/miss status + countdown.
-
+// --- CacheStatusBar Component ---
 function CacheStatusBar({ status, onRefresh }) {
   const [timeLeft, setTimeLeft] = useState('');
 
@@ -759,3 +972,286 @@ const cacheBarStyles = {
   },
 };
 
+// --- CustomSelect Component ---
+// Generic fixed-position dropdown — always opens downward.
+function CustomSelect({ value, onChange, options }) {
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef(null);
+  const panelRef = useRef(null);
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+
+  const selected = options.find(o => o.value === value) || options[0];
+
+  const openDropdown = () => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setPos({ top: rect.bottom + 4, left: rect.left, width: Math.max(rect.width, 160) });
+    }
+    setOpen(true);
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const onClickOutside = (e) => {
+      if (
+        panelRef.current && !panelRef.current.contains(e.target) &&
+        triggerRef.current && !triggerRef.current.contains(e.target)
+      ) setOpen(false);
+    };
+    const onScroll = (e) => {
+      if (panelRef.current && panelRef.current.contains(e.target)) return;
+      setOpen(false);
+    };
+    document.addEventListener('mousedown', onClickOutside);
+    window.addEventListener('scroll', onScroll, true);
+    return () => {
+      document.removeEventListener('mousedown', onClickOutside);
+      window.removeEventListener('scroll', onScroll, true);
+    };
+  }, [open]);
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => open ? setOpen(false) : openDropdown()}
+        style={cpStyles.trigger}
+      >
+        <span style={{ flex: 1, textAlign: 'left' }}>{selected?.label}</span>
+        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{open ? '▲' : '▼'}</span>
+      </button>
+      {open && (
+        <div
+          ref={panelRef}
+          style={{ ...cpStyles.panel, top: pos.top, left: pos.left, width: pos.width, maxHeight: '240px' }}
+        >
+          <div style={cpStyles.list}>
+            {options.map(opt => (
+              <div
+                key={opt.value}
+                style={{
+                  ...cpStyles.option,
+                  ...(opt.value === value ? cpStyles.optionActive : {}),
+                }}
+                onClick={() => { onChange(opt.value); setOpen(false); }}
+              >
+                {opt.label}
+                {opt.value === value && <span style={cpStyles.check}>✓</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+// --- CountryPicker Component ---
+// Custom dropdown that always opens DOWNWARD using position:fixed,
+// immune to parent overflow:hidden clipping.
+function CountryPicker({ value, onChange, options }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const triggerRef = useRef(null);
+  const panelRef = useRef(null);
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+
+  const selected = options.find(o => o.value === value) || options[0];
+  const filtered = options.filter(o =>
+    o.label.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const openDropdown = () => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setPos({
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: Math.max(rect.width, 220),
+      });
+    }
+    setOpen(true);
+    setSearch('');
+  };
+
+  // Close on outside click OR any scroll
+  useEffect(() => {
+    if (!open) return;
+    const onClickOutside = (e) => {
+      if (
+        panelRef.current && !panelRef.current.contains(e.target) &&
+        triggerRef.current && !triggerRef.current.contains(e.target)
+      ) setOpen(false);
+    };
+    const onScroll = (e) => {
+      if (panelRef.current && panelRef.current.contains(e.target)) return;
+      setOpen(false);
+    };
+    document.addEventListener('mousedown', onClickOutside);
+    window.addEventListener('scroll', onScroll, true);
+    return () => {
+      document.removeEventListener('mousedown', onClickOutside);
+      window.removeEventListener('scroll', onScroll, true);
+    };
+  }, [open]);
+
+  return (
+    <>
+      {/* Trigger button styled like other selects */}
+      <button
+        ref={triggerRef}
+        onClick={() => open ? setOpen(false) : openDropdown()}
+        style={cpStyles.trigger}
+        type="button"
+      >
+        <span style={{ flex: 1, textAlign: 'left' }}>{selected.label}</span>
+        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{open ? '▲' : '▼'}</span>
+      </button>
+
+      {/* Portal-like panel anchored via position:fixed */}
+      {open && (
+        <div
+          ref={panelRef}
+          style={{
+            ...cpStyles.panel,
+            top: pos.top,
+            left: pos.left,
+            width: pos.width,
+          }}
+        >
+          {/* Search input */}
+          <div style={cpStyles.searchWrap}>
+            <span style={cpStyles.searchIcon}>🔍</span>
+            <input
+              autoFocus
+              type="text"
+              placeholder="Search country…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={cpStyles.searchInput}
+            />
+            {search && (
+              <button style={cpStyles.clearSearch} onClick={() => setSearch('')}>×</button>
+            )}
+          </div>
+
+          {/* Options list */}
+          <div style={cpStyles.list}>
+            {filtered.length === 0 ? (
+              <div style={cpStyles.noResult}>No countries found</div>
+            ) : (
+              filtered.map(opt => (
+                <div
+                  key={opt.value}
+                  style={{
+                    ...cpStyles.option,
+                    ...(opt.value === value ? cpStyles.optionActive : {}),
+                  }}
+                  onClick={() => { onChange(opt.value); setOpen(false); }}
+                >
+                  {opt.label}
+                  {opt.value === value && <span style={cpStyles.check}>✓</span>}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+const cpStyles = {
+  trigger: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    height: '38px',
+    minWidth: '180px',
+    padding: '0 12px',
+    backgroundColor: 'var(--bg-input)',
+    border: '1px solid var(--border-light)',
+    borderRadius: 'var(--radius-sm)',
+    color: 'var(--text-primary)',
+    fontSize: '0.88rem',
+    fontWeight: '500',
+    cursor: 'pointer',
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
+    textAlign: 'left',
+    transition: 'border-color 0.15s',
+  },
+  panel: {
+    position: 'fixed',
+    zIndex: 9999,
+    backgroundColor: 'var(--bg-card)',
+    border: '1px solid var(--border-light)',
+    borderRadius: 'var(--radius-md)',
+    boxShadow: '0 12px 32px rgba(0,0,0,0.12)',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    maxHeight: '340px',
+  },
+  searchWrap: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '10px 12px',
+    borderBottom: '1px solid var(--border-light)',
+    flexShrink: 0,
+  },
+  searchIcon: {
+    fontSize: '0.85rem',
+    flexShrink: 0,
+  },
+  searchInput: {
+    flex: 1,
+    border: 'none',
+    outline: 'none',
+    backgroundColor: 'transparent',
+    fontSize: '0.88rem',
+    color: 'var(--text-primary)',
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
+  },
+  clearSearch: {
+    background: 'none',
+    border: 'none',
+    fontSize: '1.1rem',
+    color: 'var(--text-muted)',
+    cursor: 'pointer',
+    lineHeight: 1,
+    padding: 0,
+  },
+  list: {
+    overflowY: 'auto',
+    flex: 1,
+  },
+  option: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '9px 14px',
+    fontSize: '0.88rem',
+    color: 'var(--text-secondary)',
+    cursor: 'pointer',
+    transition: 'background 0.12s',
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
+  },
+  optionActive: {
+    backgroundColor: 'rgba(136, 19, 55, 0.07)',
+    color: 'var(--accent-primary)',
+    fontWeight: '600',
+  },
+  check: {
+    fontSize: '0.8rem',
+    color: 'var(--accent-primary)',
+    fontWeight: '700',
+  },
+  noResult: {
+    padding: '18px',
+    textAlign: 'center',
+    color: 'var(--text-muted)',
+    fontSize: '0.85rem',
+  },
+};
