@@ -7,15 +7,19 @@ export const API_BASE_URL = (() => {
 
   // 2. Client-side browser runtime check
   if (typeof window !== 'undefined') {
+    // Check if user saved a custom API URL override
+    const localOverride = window.localStorage.getItem('VITE_API_BASE_URL');
+    if (localOverride) return localOverride;
+
     const host = window.location.hostname;
     // Local development or local docker
     if (host === 'localhost' || host === '127.0.0.1') {
       return 'http://localhost:5000/api';
     }
     // Render production deployment fallback:
-    // Derives backend domain from frontend domain (e.g. news-aggregator-frontend... -> news-aggregator-backend...)
+    // Converts 'news-aggregator-frontend-m7pi.onrender.com' -> 'news-aggregator-backend.onrender.com'
     if (host.includes('.onrender.com')) {
-      const renderBackendHost = host.replace('frontend', 'backend');
+      const renderBackendHost = host.replace(/frontend(-[a-z0-9]+)?/i, 'backend');
       return `https://${renderBackendHost}/api`;
     }
   }
