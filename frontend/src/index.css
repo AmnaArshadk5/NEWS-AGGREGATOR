@@ -434,6 +434,56 @@ table td {
   }
 }
 
+/* ── Admin Panel Mobile Responsiveness (iPhone 13 & Smartphones) ── */
+@media (max-width: 768px) {
+  /* Admin Top Bar Flex Flow */
+  header div[style*="topBarInner"] {
+    height: auto !important;
+    padding: 12px 14px !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+
+  /* Admin Header Row 2: Tab Navigation Pills (Overview, Users, Categories) */
+  header nav[style*="tabNav"] {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 6px !important;
+    overflow-x: auto !important;
+    padding-bottom: 2px !important;
+  }
+
+  header nav[style*="tabNav"] button {
+    flex: 1 !important;
+    justify-content: center !important;
+    padding: 8px 10px !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* Admin Header Controls */
+  header div[style*="topBarRight"] {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  /* Stats Grid Layout on Mobile Phones */
+  div[style*="statsGrid"] {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+    width: 100% !important;
+  }
+
+  /* Main Admin Container Padding */
+  main div[style*="contentContainer"] {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+    width: 100% !important;
+  }
+}
+
 /* ── Mobile Hamburger & Navigation Drawer Styles ── */
 .mobile-hamburger-btn {
   display: none;
