@@ -30,4 +30,4 @@ databases:
   # 3. PostgreSQL Database Service
   - name: news-postgres-db
     databaseName: news_aggregator
-    user: postgres
+    user: news_user
