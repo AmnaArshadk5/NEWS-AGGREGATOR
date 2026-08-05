@@ -601,7 +601,7 @@ const styles = {
     top: 'calc(100% + 8px)',
     left: 0,
     width: '100%',
-    minWidth: '340px',
+    maxWidth: '100%',
     backgroundColor: 'var(--bg-card)',
     borderRadius: 'var(--radius-md)',
     border: '1px solid var(--border-light)',
