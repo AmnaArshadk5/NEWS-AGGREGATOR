@@ -84,9 +84,20 @@ export const runQuery = async (sql, params = []) => {
     if (/^\s*INSERT\s+INTO/i.test(pgSql) && !/RETURNING/i.test(pgSql)) {
       pgSql += ' RETURNING id';
     }
-    const res = await pgPool.query(pgSql, params);
-    const lastId = res.rows.length > 0 && res.rows[0]?.id ? res.rows[0].id : null;
-    return { id: lastId, changes: res.rowCount };
+    try {
+      const res = await pgPool.query(pgSql, params);
+      const lastId = res.rows.length > 0 && res.rows[0]?.id ? res.rows[0].id : null;
+      return { id: lastId, changes: res.rowCount };
+    } catch (err) {
+      if (err.code === '42P01') {
+        console.warn('[Database] Missing PostgreSQL table detected. Auto-creating schema...');
+        await initializePgTables();
+        const res = await pgPool.query(pgSql, params);
+        const lastId = res.rows.length > 0 && res.rows[0]?.id ? res.rows[0].id : null;
+        return { id: lastId, changes: res.rowCount };
+      }
+      throw err;
+    }
   } else {
     return new Promise((resolve, reject) => {
       sqliteDb.run(sql, params, function (err) {
@@ -101,8 +112,18 @@ export const runQuery = async (sql, params = []) => {
 export const getQuery = async (sql, params = []) => {
   if (usePostgres) {
     const pgSql = convertSqlPlaceholders(sql);
-    const res = await pgPool.query(pgSql, params);
-    return res.rows[0] || null;
+    try {
+      const res = await pgPool.query(pgSql, params);
+      return res.rows[0] || null;
+    } catch (err) {
+      if (err.code === '42P01') {
+        console.warn('[Database] Missing PostgreSQL table detected. Auto-creating schema...');
+        await initializePgTables();
+        const res = await pgPool.query(pgSql, params);
+        return res.rows[0] || null;
+      }
+      throw err;
+    }
   } else {
     return new Promise((resolve, reject) => {
       sqliteDb.get(sql, params, (err, row) => {
@@ -117,8 +138,18 @@ export const getQuery = async (sql, params = []) => {
 export const allQuery = async (sql, params = []) => {
   if (usePostgres) {
     const pgSql = convertSqlPlaceholders(sql);
-    const res = await pgPool.query(pgSql, params);
-    return res.rows;
+    try {
+      const res = await pgPool.query(pgSql, params);
+      return res.rows;
+    } catch (err) {
+      if (err.code === '42P01') {
+        console.warn('[Database] Missing PostgreSQL table detected. Auto-creating schema...');
+        await initializePgTables();
+        const res = await pgPool.query(pgSql, params);
+        return res.rows;
+      }
+      throw err;
+    }
   } else {
     return new Promise((resolve, reject) => {
       sqliteDb.all(sql, params, (err, rows) => {
