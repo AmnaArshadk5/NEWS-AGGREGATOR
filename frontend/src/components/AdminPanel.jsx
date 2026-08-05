@@ -266,10 +266,10 @@ export default function AdminPanel({ onCategoriesUpdated }) {
     <div style={styles.pageWrapper}>
 
       {/* ===== TOP NAVIGATION BAR ===== */}
-      <header style={styles.topBar}>
-        <div style={styles.topBarInner}>
+      <header className="admin-top-bar" style={styles.topBar}>
+        <div className="admin-top-bar-inner" style={styles.topBarInner}>
           {/* Brand */}
-          <div style={styles.brand}>
+          <div className="admin-brand" style={styles.brand}>
             <div style={styles.brandIcon}>
               <Shield size={18} color="#fff" />
             </div>
@@ -281,7 +281,7 @@ export default function AdminPanel({ onCategoriesUpdated }) {
           </div>
 
           {/* Tab Navigation */}
-          <nav style={styles.tabNav}>
+          <nav className="admin-tab-nav" style={styles.tabNav}>
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -300,7 +300,7 @@ export default function AdminPanel({ onCategoriesUpdated }) {
           </nav>
 
           {/* User + Sign Out */}
-          <div style={styles.topBarRight}>
+          <div className="admin-top-bar-right" style={styles.topBarRight}>
             <button
               onClick={toggleTheme}
               style={{
