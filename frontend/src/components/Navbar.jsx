@@ -237,7 +237,7 @@ export default function Navbar({
         </form>
 
         {/* Actions */}
-        <div style={styles.actions}>
+        <div className="desktop-actions" style={styles.actions}>
           {user ? (
             <>
               {/* Admin Button */}

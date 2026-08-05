@@ -612,7 +612,7 @@ table td {
   }
 
   /* Hide desktop action buttons on mobile screens */
-  header nav div[style*="actions"] {
+  .desktop-actions {
     display: none !important;
   }
 
