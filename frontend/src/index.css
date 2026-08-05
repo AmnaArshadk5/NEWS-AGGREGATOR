@@ -343,14 +343,48 @@ table td {
     font-size: 14px;
   }
 
+  /* Navbar 3-Row Mobile Flow */
+  header nav {
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 10px 14px !important;
+    gap: 10px !important;
+  }
+
+  /* Form & Search Input */
+  header nav form {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+  }
+
+  /* Actions Horizontal Pill Scroll Bar */
+  header nav div[style*="actions"] {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    padding-bottom: 4px !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  header nav div[style*="actions"]::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  header nav div[style*="actions"] button {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    font-size: 0.8rem !important;
+    padding: 6px 12px !important;
+    height: 36px !important;
+  }
+
   .news-grid {
     grid-template-columns: 1fr !important;
     gap: 16px !important;
-  }
-
-  nav, header nav {
-    padding: 10px 12px !important;
-    gap: 10px !important;
   }
 
   .landing-hero-title {
