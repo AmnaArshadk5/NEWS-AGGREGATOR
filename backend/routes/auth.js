@@ -54,7 +54,7 @@ router.post('/register', authLimiter, async (req, res) => {
     });
   } catch (err) {
     console.error('Registration error:', err);
-    res.status(500).json({ error: 'Internal server error during registration' });
+    res.status(500).json({ error: err.message || 'Internal server error during registration' });
   }
 });
 
@@ -93,7 +93,7 @@ router.post('/login', authLimiter, async (req, res) => {
     });
   } catch (err) {
     console.error('Login error:', err);
-    res.status(500).json({ error: 'Internal server error during login' });
+    res.status(500).json({ error: err.message || 'Internal server error during login' });
   }
 });
 
