@@ -11,7 +11,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dbPath = path.resolve(__dirname, 'news.db');
 
 // Check if PostgreSQL configuration is enabled
-const usePostgres = process.env.USE_POSTGRES === 'true' || Boolean(process.env.DATABASE_URL || process.env.PG_HOST);
+const usePostgres = Boolean(process.env.DATABASE_URL || (process.env.USE_POSTGRES === 'true' && process.env.PG_HOST));
 
 let pgPool = null;
 let sqliteDb = null;
@@ -25,7 +25,19 @@ if (usePostgres) {
     database: process.env.PG_DATABASE || 'news_aggregator',
   };
 
-  pgPool = new Pool(typeof connectionString === 'string' ? { connectionString } : connectionString);
+  const isRemote = typeof connectionString === 'string' && (connectionString.includes('render.com') || connectionString.includes('ssl=true') || process.env.NODE_ENV === 'production');
+
+  const poolConfig = typeof connectionString === 'string'
+    ? {
+        connectionString,
+        ssl: isRemote ? { rejectUnauthorized: false } : false
+      }
+    : {
+        ...connectionString,
+        ssl: isRemote ? { rejectUnauthorized: false } : false
+      };
+
+  pgPool = new Pool(poolConfig);
 
   pgPool.on('connect', () => {
     console.log('[Database] Connected to PostgreSQL instance');
@@ -37,6 +49,7 @@ if (usePostgres) {
 
   initializePgTables();
 } else {
+  console.log('[Database] Operating with embedded SQLite storage');
   sqliteDb = new sqlite3.Database(dbPath, (err) => {
     if (err) {
       console.error('[Database] Error opening SQLite database:', err.message);
