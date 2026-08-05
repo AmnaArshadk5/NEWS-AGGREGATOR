@@ -620,3 +620,120 @@ table td {
     flex-wrap: nowrap !important;
   }
 }
+
+/* ── Mobile Users Card View & Categories Responsiveness ── */
+.mobile-users-cards {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-user-item-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-user-item-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobile-user-item-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--accent-secondary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.mobile-user-item-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-user-item-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.mobile-user-item-role {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.mobile-user-item-role.admin {
+  color: var(--accent-primary);
+}
+
+.mobile-user-item-details {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background-color: var(--bg-input);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.mobile-user-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mobile-user-act-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.mobile-user-del-btn {
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  background-color: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .desktop-table-card {
+    display: none !important;
+  }
+
+  .mobile-users-cards {
+    display: flex !important;
+  }
+
+  /* Category Form Rows Stack Vertically on Mobile */
+  form[style*="formRow"] {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  form[style*="formRow"] input, form[style*="formRow"] button {
+    width: 100% !important;
+  }
+
+  div[style*="categoriesGrid"] {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+}

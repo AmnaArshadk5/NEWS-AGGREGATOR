@@ -402,74 +402,125 @@ export default function AdminPanel({ onCategoriesUpdated }) {
                   <Loader2 className="spinner" size={28} color="var(--accent-primary)" />
                 </div>
               ) : (
-                <div style={styles.tableCard}>
-                  <table style={styles.table}>
-                    <thead>
-                      <tr>
-                        <th>User Profile</th>
-                        <th>Role</th>
-                        <th>Saved Articles</th>
-                        <th>Joined</th>
-                        <th style={{ textAlign: 'right' }}>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredUsers.map((u, i) => (
-                        <tr key={u.id} style={{ ...styles.tableRow, animationDelay: `${i * 0.05}s` }} className="admin-tr">
-                          <td>
-                            <div style={styles.userCell}>
-                              <div style={styles.avatarMini}>{u.username.charAt(0).toUpperCase()}</div>
-                              <div>
-                                <span style={styles.usernameText}>{u.username}</span>
-                                {u.id === user?.id && <span style={styles.youBadge}> (You)</span>}
+                <>
+                  {/* Desktop Table View */}
+                  <div className="desktop-table-card" style={styles.tableCard}>
+                    <table style={styles.table}>
+                      <thead>
+                        <tr>
+                          <th>User Profile</th>
+                          <th>Role</th>
+                          <th>Saved Articles</th>
+                          <th>Joined</th>
+                          <th style={{ textAlign: 'right' }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredUsers.map((u, i) => (
+                          <tr key={u.id} style={{ ...styles.tableRow, animationDelay: `${i * 0.05}s` }} className="admin-tr">
+                            <td>
+                              <div style={styles.userCell}>
+                                <div style={styles.avatarMini}>{u.username.charAt(0).toUpperCase()}</div>
+                                <div>
+                                  <span style={styles.usernameText}>{u.username}</span>
+                                  {u.id === user?.id && <span style={styles.youBadge}> (You)</span>}
+                                </div>
                               </div>
-                            </div>
-                          </td>
-                          <td>
-                            <span style={{
-                              ...styles.roleBadge,
-                              backgroundColor: u.role === 'admin' ? 'rgba(136, 19, 55, 0.08)' : 'var(--bg-input)',
-                              color: u.role === 'admin' ? 'var(--accent-primary)' : 'var(--text-secondary)'
-                            }}>
+                            </td>
+                            <td>
+                              <span style={{
+                                ...styles.roleBadge,
+                                backgroundColor: u.role === 'admin' ? 'rgba(136, 19, 55, 0.08)' : 'var(--bg-input)',
+                                color: u.role === 'admin' ? 'var(--accent-primary)' : 'var(--text-secondary)'
+                              }}>
+                                {u.role ? u.role.toUpperCase() : 'USER'}
+                              </span>
+                            </td>
+                            <td style={styles.mutedText}>{u.bookmark_count || 0} items</td>
+                            <td style={styles.mutedText}>{new Date(u.created_at).toLocaleDateString()}</td>
+                            <td style={{ textAlign: 'right' }}>
+                              <div style={styles.actionBtns}>
+                                <button
+                                  onClick={() => handleToggleRole(u.id, u.role)}
+                                  disabled={u.id === user?.id || actionLoading}
+                                  className="btn btn-secondary"
+                                  style={styles.miniBtn}
+                                  title={u.role === 'admin' ? "Demote to User" : "Promote to Admin"}
+                                >
+                                  {u.role === 'admin' ? <UserX size={14} /> : <UserCheck size={14} />}
+                                  <span>{u.role === 'admin' ? 'Demote' : 'Promote'}</span>
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteUser(u.id, u.username)}
+                                  disabled={u.id === user?.id || actionLoading}
+                                  style={styles.deleteBtn}
+                                  title="Delete user"
+                                >
+                                  <Trash2 size={15} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                        {filteredUsers.length === 0 && (
+                          <tr>
+                            <td colSpan="5" style={styles.emptyState}>
+                              No users found.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile Card View */}
+                  <div className="mobile-users-cards">
+                    {filteredUsers.map((u) => (
+                      <div key={`m-${u.id}`} className="mobile-user-item-card">
+                        <div className="mobile-user-item-header">
+                          <div className="mobile-user-item-avatar">
+                            {u.username.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="mobile-user-item-info">
+                            <span className="mobile-user-item-name">
+                              {u.username} {u.id === user?.id && '(You)'}
+                            </span>
+                            <span className={`mobile-user-item-role ${u.role === 'admin' ? 'admin' : ''}`}>
                               {u.role ? u.role.toUpperCase() : 'USER'}
                             </span>
-                          </td>
-                          <td style={styles.mutedText}>{u.bookmark_count || 0} items</td>
-                          <td style={styles.mutedText}>{new Date(u.created_at).toLocaleDateString()}</td>
-                          <td style={{ textAlign: 'right' }}>
-                            <div style={styles.actionBtns}>
-                              <button
-                                onClick={() => handleToggleRole(u.id, u.role)}
-                                disabled={u.id === user?.id || actionLoading}
-                                className="btn btn-secondary"
-                                style={styles.miniBtn}
-                                title={u.role === 'admin' ? "Demote to User" : "Promote to Admin"}
-                              >
-                                {u.role === 'admin' ? <UserX size={14} /> : <UserCheck size={14} />}
-                                <span>{u.role === 'admin' ? 'Demote' : 'Promote'}</span>
-                              </button>
-                              <button
-                                onClick={() => handleDeleteUser(u.id, u.username)}
-                                disabled={u.id === user?.id || actionLoading}
-                                style={styles.deleteBtn}
-                                title="Delete user"
-                              >
-                                <Trash2 size={15} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                      {filteredUsers.length === 0 && (
-                        <tr>
-                          <td colSpan="5" style={styles.emptyState}>
-                            No users found.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                          </div>
+                        </div>
+
+                        <div className="mobile-user-item-details">
+                          <div><span>Saved Articles:</span> <strong>{u.bookmark_count || 0} items</strong></div>
+                          <div><span>Joined:</span> <strong>{new Date(u.created_at).toLocaleDateString()}</strong></div>
+                        </div>
+
+                        <div className="mobile-user-item-actions">
+                          <button
+                            onClick={() => handleToggleRole(u.id, u.role)}
+                            disabled={u.id === user?.id || actionLoading}
+                            className="btn btn-secondary mobile-user-act-btn"
+                          >
+                            {u.role === 'admin' ? <UserX size={15} /> : <UserCheck size={15} />}
+                            <span>{u.role === 'admin' ? 'Demote' : 'Promote'}</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleDeleteUser(u.id, u.username)}
+                            disabled={u.id === user?.id || actionLoading}
+                            className="mobile-user-del-btn"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {filteredUsers.length === 0 && (
+                      <div style={styles.emptyState}>No users found.</div>
+                    )}
+                  </div>
+                </>
               )}
             </div>
           )}
