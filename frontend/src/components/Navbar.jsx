@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
   Search, LogOut, Bookmark, User, Shield, KeyRound,
-  ChevronDown, History, TrendingUp, Trash2, X, Clock, CheckCheck, BookOpen, Sun, Moon
+  ChevronDown, History, TrendingUp, Trash2, X, Clock, CheckCheck, BookOpen, Sun, Moon, Menu
 } from 'lucide-react';
 
 const TRENDING_TOPICS = [
@@ -24,6 +24,7 @@ export default function Navbar({
   const { user, logout, bookmarks } = useAuth();
   const [searchVal, setSearchVal] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   // Night Mode / Dark Theme state
@@ -391,7 +392,115 @@ export default function Navbar({
             </button>
           )}
         </div>
+
+        {/* Mobile Hamburger Toggle Button */}
+        <button
+          className="mobile-hamburger-btn"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle Navigation Menu"
+        >
+          {mobileMenuOpen ? <X size={22} color="var(--text-primary)" /> : <Menu size={22} color="var(--text-primary)" />}
+        </button>
       </nav>
+
+      {/* ── Mobile Navigation Drawer ── */}
+      {mobileMenuOpen && (
+        <div className="mobile-nav-drawer">
+          {user ? (
+            <div className="mobile-menu-items">
+              <div className="mobile-user-card">
+                <div className="mobile-user-avatar">
+                  {user.username.charAt(0).toUpperCase()}
+                </div>
+                <div className="mobile-user-details">
+                  <span className="mobile-user-name">{user.username}</span>
+                  <span className="mobile-user-role">{user.role ? user.role.toUpperCase() : 'USER'}</span>
+                </div>
+              </div>
+
+              {/* Progress Shelf */}
+              <button
+                onClick={() => { setMobileMenuOpen(false); onToggleProgress(); }}
+                className={`mobile-menu-btn ${showProgressOnly ? 'active' : ''}`}
+              >
+                <BookOpen size={18} color="var(--accent-primary)" />
+                <span>Reading Progress</span>
+                {progressCount > 0 && <span className="mobile-badge">{progressCount}</span>}
+              </button>
+
+              {/* Saved Stories */}
+              <button
+                onClick={() => { setMobileMenuOpen(false); onToggleBookmarks(); }}
+                className={`mobile-menu-btn ${showBookmarksOnly ? 'active' : ''}`}
+              >
+                <Bookmark size={18} color="var(--accent-primary)" />
+                <span>Saved Stories</span>
+                {bookmarks.length > 0 && <span className="mobile-badge">{bookmarks.length}</span>}
+              </button>
+
+              {/* Night Mode Switch */}
+              <button
+                onClick={toggleTheme}
+                className="mobile-menu-btn"
+              >
+                {isDarkMode ? <Sun size={18} color="#fbbf24" /> : <Moon size={18} color="var(--text-secondary)" />}
+                <span>{isDarkMode ? 'Light Theme' : 'Night Mode'}</span>
+              </button>
+
+              {/* Admin Control Panel */}
+              {user.role === 'admin' && (
+                <button
+                  onClick={() => { setMobileMenuOpen(false); openAdminPanel(); }}
+                  className="mobile-menu-btn"
+                >
+                  <Shield size={18} color="var(--accent-primary)" />
+                  <span>Admin Panel</span>
+                </button>
+              )}
+
+              {/* Change Password */}
+              <button
+                onClick={() => { setMobileMenuOpen(false); openChangePasswordModal(); }}
+                className="mobile-menu-btn"
+              >
+                <KeyRound size={18} />
+                <span>Change Password</span>
+              </button>
+
+              {/* Search History */}
+              <button
+                onClick={() => { setMobileMenuOpen(false); setHistoryPanelOpen(true); }}
+                className="mobile-menu-btn"
+              >
+                <History size={18} />
+                <span>Search History</span>
+              </button>
+
+              {/* Sign Out */}
+              <button
+                onClick={() => { setMobileMenuOpen(false); logout(); }}
+                className="mobile-menu-btn logout"
+              >
+                <LogOut size={18} color="#ef4444" />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          ) : (
+            <div className="mobile-menu-items">
+              <button onClick={toggleTheme} className="mobile-menu-btn">
+                {isDarkMode ? <Sun size={18} color="#fbbf24" /> : <Moon size={18} color="var(--text-secondary)" />}
+                <span>{isDarkMode ? 'Light Theme' : 'Night Mode'}</span>
+              </button>
+              <button
+                onClick={() => { setMobileMenuOpen(false); openAuthModal(); }}
+                className="btn btn-primary mobile-signin-btn"
+              >
+                Sign In / Register
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Thin accent line */}
       <div style={styles.accentLine} />
