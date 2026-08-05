@@ -102,8 +102,6 @@ const COUNTRY_OPTIONS = [
   { value: 've', label: '🇻🇪 Venezuela' },
 ];
 
-const API_BASE_URL = 'http://localhost:5000/api';
-
 export default function App() {
   const { user, bookmarks, isLoadingBookmarks, sessionNotice, setSessionNotice } = useAuth();
   const [articles, setArticles] = useState([]);
