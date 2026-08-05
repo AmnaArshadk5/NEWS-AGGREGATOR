@@ -231,7 +231,7 @@ export default function ArticleModal({ article, isOpen, onClose, onProgressUpdat
               {urlToImage && (
                 <div style={styles.imageWrap}>
                   <img
-                    src={urlToImage.startsWith('http://localhost:5000/api/proxy/image') || urlToImage.startsWith('data:') || urlToImage.includes('unsplash.com') ? urlToImage : `http://localhost:5000/api/proxy/image?url=${encodeURIComponent(urlToImage)}`}
+                    src={urlToImage.includes('/api/proxy/image') || urlToImage.startsWith('data:') || urlToImage.includes('unsplash.com') ? urlToImage : `${API_BASE}/proxy/image?url=${encodeURIComponent(urlToImage)}`}
                     alt={title}
                     style={styles.image}
                     referrerPolicy="no-referrer"
