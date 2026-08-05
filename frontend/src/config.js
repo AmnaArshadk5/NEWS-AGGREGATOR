@@ -1,26 +1,26 @@
 // Dynamic API Base URL resolver for Local, Docker, and Render cloud deployments
 export const API_BASE_URL = (() => {
-  // 1. If explicit env variable is provided (Vite build-time or runtime)
+  // 1. Check localStorage override first
+  if (typeof window !== 'undefined') {
+    const localOverride = window.localStorage.getItem('VITE_API_BASE_URL');
+    if (localOverride) return localOverride;
+  }
+
+  // 2. Explicit env variable during build/runtime
   if (import.meta.env.VITE_API_BASE_URL) {
     return import.meta.env.VITE_API_BASE_URL;
   }
 
-  // 2. Client-side browser runtime check
+  // 3. Client-side browser runtime check
   if (typeof window !== 'undefined') {
-    // Check if user saved a custom API URL override
-    const localOverride = window.localStorage.getItem('VITE_API_BASE_URL');
-    if (localOverride) return localOverride;
-
     const host = window.location.hostname;
     // Local development or local docker
     if (host === 'localhost' || host === '127.0.0.1') {
       return 'http://localhost:5000/api';
     }
-    // Render production deployment fallback:
-    // Converts 'news-aggregator-frontend-m7pi.onrender.com' -> 'news-aggregator-backend.onrender.com'
+    // Render cloud production backend URL
     if (host.includes('.onrender.com')) {
-      const renderBackendHost = host.replace(/frontend(-[a-z0-9]+)?/i, 'backend');
-      return `https://${renderBackendHost}/api`;
+      return 'https://news-aggregator-ac9t.onrender.com/api';
     }
   }
 
