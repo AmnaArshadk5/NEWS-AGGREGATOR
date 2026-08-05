@@ -10,11 +10,18 @@ dotenv.config();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dbPath = path.resolve(__dirname, 'news.db');
 
+// Always initialize SQLite as secondary failover storage
+sqliteDb = new sqlite3.Database(dbPath, (err) => {
+  if (err) {
+    console.error('[Database] SQLite failover error:', err.message);
+  } else {
+    sqliteDb.run('PRAGMA foreign_keys = ON;');
+    initializeSqliteTables();
+  }
+});
+
 // Check if PostgreSQL configuration is enabled
 const usePostgres = Boolean(process.env.DATABASE_URL || (process.env.USE_POSTGRES === 'true' && process.env.PG_HOST));
-
-let pgPool = null;
-let sqliteDb = null;
 
 if (usePostgres) {
   const connectionString = process.env.DATABASE_URL || {
@@ -48,17 +55,6 @@ if (usePostgres) {
   });
 
   initializePgTables();
-} else {
-  console.log('[Database] Operating with embedded SQLite storage');
-  sqliteDb = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-      console.error('[Database] Error opening SQLite database:', err.message);
-    } else {
-      console.log('[Database] Connected to SQLite database at:', dbPath);
-      sqliteDb.run('PRAGMA foreign_keys = ON;');
-      initializeSqliteTables();
-    }
-  });
 }
 
 // ── Convert SQLite ? placeholders to PostgreSQL $1, $2, $3 ──
@@ -67,20 +63,18 @@ function convertSqlPlaceholders(sql) {
   return sql.replace(/\?/g, () => `$${paramIndex++}`);
 }
 
-// ── Query Wrappers ──
+// ── Failover Query Wrappers ──
 
 // Execute INSERT / UPDATE / DELETE
 export const runQuery = async (sql, params = []) => {
-  if (usePostgres) {
+  if (usePostgres && pgPool) {
     let pgSql = convertSqlPlaceholders(sql);
-    // Translate SQLite "INSERT OR IGNORE INTO" to PostgreSQL "INSERT INTO ... ON CONFLICT DO NOTHING"
     if (/INSERT\s+OR\s+IGNORE\s+INTO/i.test(pgSql)) {
       pgSql = pgSql.replace(/INSERT\s+OR\s+IGNORE\s+INTO/i, 'INSERT INTO');
       if (!/ON\s+CONFLICT/i.test(pgSql)) {
         pgSql += ' ON CONFLICT DO NOTHING';
       }
     }
-    // If it's an INSERT and doesn't specify RETURNING, append RETURNING id
     if (/^\s*INSERT\s+INTO/i.test(pgSql) && !/RETURNING/i.test(pgSql)) {
       pgSql += ' RETURNING id';
     }
@@ -89,12 +83,17 @@ export const runQuery = async (sql, params = []) => {
       const lastId = res.rows.length > 0 && res.rows[0]?.id ? res.rows[0].id : null;
       return { id: lastId, changes: res.rowCount };
     } catch (err) {
+      console.warn('[Database] PostgreSQL runQuery failover:', err.message);
       if (err.code === '42P01') {
-        console.warn('[Database] Missing PostgreSQL table detected. Auto-creating schema...');
         await initializePgTables();
-        const res = await pgPool.query(pgSql, params);
-        const lastId = res.rows.length > 0 && res.rows[0]?.id ? res.rows[0].id : null;
-        return { id: lastId, changes: res.rowCount };
+      }
+      if (sqliteDb) {
+        return new Promise((resolve, reject) => {
+          sqliteDb.run(sql, params, function (e) {
+            if (e) reject(e);
+            else resolve({ id: this.lastID, changes: this.changes });
+          });
+        });
       }
       throw err;
     }
@@ -110,17 +109,23 @@ export const runQuery = async (sql, params = []) => {
 
 // Execute SELECT single row
 export const getQuery = async (sql, params = []) => {
-  if (usePostgres) {
+  if (usePostgres && pgPool) {
     const pgSql = convertSqlPlaceholders(sql);
     try {
       const res = await pgPool.query(pgSql, params);
       return res.rows[0] || null;
     } catch (err) {
+      console.warn('[Database] PostgreSQL getQuery failover:', err.message);
       if (err.code === '42P01') {
-        console.warn('[Database] Missing PostgreSQL table detected. Auto-creating schema...');
         await initializePgTables();
-        const res = await pgPool.query(pgSql, params);
-        return res.rows[0] || null;
+      }
+      if (sqliteDb) {
+        return new Promise((resolve, reject) => {
+          sqliteDb.get(sql, params, (e, row) => {
+            if (e) reject(e);
+            else resolve(row || null);
+          });
+        });
       }
       throw err;
     }
@@ -136,17 +141,23 @@ export const getQuery = async (sql, params = []) => {
 
 // Execute SELECT multiple rows
 export const allQuery = async (sql, params = []) => {
-  if (usePostgres) {
+  if (usePostgres && pgPool) {
     const pgSql = convertSqlPlaceholders(sql);
     try {
       const res = await pgPool.query(pgSql, params);
       return res.rows;
     } catch (err) {
+      console.warn('[Database] PostgreSQL allQuery failover:', err.message);
       if (err.code === '42P01') {
-        console.warn('[Database] Missing PostgreSQL table detected. Auto-creating schema...');
         await initializePgTables();
-        const res = await pgPool.query(pgSql, params);
-        return res.rows;
+      }
+      if (sqliteDb) {
+        return new Promise((resolve, reject) => {
+          sqliteDb.all(sql, params, (e, rows) => {
+            if (e) reject(e);
+            else resolve(rows || []);
+          });
+        });
       }
       throw err;
     }
