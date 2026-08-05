@@ -583,22 +583,38 @@ table td {
   text-align: center;
 }
 
+/* ── Desktop & Mobile Header Layout ── */
+.mobile-brand-row {
+  display: flex;
+  align-items: center;
+}
+
 @media (max-width: 768px) {
-  .mobile-hamburger-btn {
+  .mobile-brand-row {
     display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
   }
 
-  .mobile-nav-drawer {
-    display: block !important;
+  header nav {
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 10px 14px !important;
+    gap: 10px !important;
   }
 
-  /* Hide desktop action buttons on mobile screens */
+  form[style*="searchForm"] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
   .desktop-actions {
     display: none !important;
   }
 
-  header nav {
-    flex-wrap: nowrap !important;
+  .mobile-hamburger-btn {
+    display: flex !important;
   }
 }
 

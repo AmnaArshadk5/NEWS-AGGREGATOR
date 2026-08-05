@@ -153,17 +153,28 @@ export default function Navbar({
     <header style={styles.header}>
       {/* Top bar */}
       <nav style={styles.nav}>
-        {/* Brand */}
-        <div
-          style={styles.brand}
-          onClick={() => {
-            handleClearSearch();
-            if (onGoHome) onGoHome();
-            else if (showBookmarksOnly) onToggleBookmarks();
-          }}
-        >
-          <span style={styles.brandText}>The Daily</span>
-          <span style={styles.brandAccent}>Wire</span>
+        <div className="mobile-brand-row">
+          {/* Brand */}
+          <div
+            style={styles.brand}
+            onClick={() => {
+              handleClearSearch();
+              if (onGoHome) onGoHome();
+              else if (showBookmarksOnly) onToggleBookmarks();
+            }}
+          >
+            <span style={styles.brandText}>The Daily</span>
+            <span style={styles.brandAccent}>Wire</span>
+          </div>
+
+          {/* Mobile Hamburger Toggle Button */}
+          <button
+            className="mobile-hamburger-btn"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle Navigation Menu"
+          >
+            {mobileMenuOpen ? <X size={22} color="var(--text-primary)" /> : <Menu size={22} color="var(--text-primary)" />}
+          </button>
         </div>
 
         {/* Search */}
@@ -392,15 +403,6 @@ export default function Navbar({
             </button>
           )}
         </div>
-
-        {/* Mobile Hamburger Toggle Button */}
-        <button
-          className="mobile-hamburger-btn"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle Navigation Menu"
-        >
-          {mobileMenuOpen ? <X size={22} color="var(--text-primary)" /> : <Menu size={22} color="var(--text-primary)" />}
-        </button>
       </nav>
 
       {/* ── Mobile Navigation Drawer ── */}
