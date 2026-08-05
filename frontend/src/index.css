@@ -478,7 +478,7 @@ table td {
 }
 
 .mobile-nav-drawer {
-  display: none;
+  display: block;
   background-color: var(--bg-card);
   border-bottom: 1px solid var(--border-light);
   padding: 16px 20px;
