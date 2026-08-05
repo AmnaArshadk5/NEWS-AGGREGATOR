@@ -4,10 +4,11 @@ import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL } from '../config';
 import ArticleModal from './ArticleModal';
 
+const FALLBACK_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='450' viewBox='0 0 800 450'%3E%3Crect width='800' height='450' fill='%231e293b'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='26' fill='%2394a3b8'%3ENews Article%3C/text%3E%3C/svg%3E";
 const PROXY_BASE = `${API_BASE_URL}/proxy/image?url=`;
 function getProxiedImage(src) {
-  if (!src) return 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=800';
-  if (src.includes('/api/proxy/image') || src.startsWith('data:') || src.includes('unsplash.com')) return src;
+  if (!src) return FALLBACK_IMAGE;
+  if (src.includes('/api/proxy/image') || src.startsWith('data:')) return src;
   return `${PROXY_BASE}${encodeURIComponent(src)}`;
 }
 
