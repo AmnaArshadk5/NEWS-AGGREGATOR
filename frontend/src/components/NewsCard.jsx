@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE_URL } from '../config';
 import { Bookmark, Clock, User, BookOpen, CheckCircle2 } from 'lucide-react';
 import ArticleModal from './ArticleModal';
 
@@ -84,10 +85,10 @@ export default function NewsCard({ article = {}, onRequireAuth }) {
     }
   };
 
-  const PROXY_BASE = 'http://localhost:5000/api/proxy/image?url=';
+  const PROXY_BASE = `${API_BASE_URL}/proxy/image?url=`;
   const getProxiedImage = (src) => {
     if (!src) return 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=800';
-    if (src.startsWith(PROXY_BASE) || src.startsWith('data:') || src.includes('unsplash.com')) return src;
+    if (src.includes('/api/proxy/image') || src.startsWith('data:') || src.includes('unsplash.com')) return src;
     return `${PROXY_BASE}${encodeURIComponent(src)}`;
   };
 
