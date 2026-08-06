@@ -183,8 +183,8 @@ export default function Navbar({
             <span style={styles.brandAccent}>Wire</span>
           </div>
 
-          {/* Far Right Most Actions: Hamburger Menu + Notification Bell */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Extreme Right-Most Actions */}
+          <div className="mobile-right-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}>
             <button
               className="mobile-hamburger-btn"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -193,7 +193,7 @@ export default function Navbar({
               {mobileMenuOpen ? <X size={22} color="var(--text-primary)" /> : <Menu size={22} color="var(--text-primary)" />}
             </button>
 
-            {/* Right-Most Notification Bell Button */}
+            {/* Extreme Right-Most Notification Bell Button */}
             {user && (
               <button
                 type="button"
@@ -206,21 +206,22 @@ export default function Navbar({
                   background: 'var(--bg-input)',
                   border: '1px solid var(--border-light)',
                   borderRadius: '10px',
-                  padding: '7px 10px',
+                  padding: '8px 11px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
-                  position: 'relative'
+                  position: 'relative',
+                  marginLeft: '2px'
                 }}
                 title="Notifications"
               >
-                <Bell size={18} color={unreadCount > 0 ? 'var(--accent-primary)' : 'var(--text-primary)'} />
+                <Bell size={19} color={unreadCount > 0 ? 'var(--accent-primary)' : 'var(--text-primary)'} />
                 {unreadCount > 0 && (
                   <span style={{
                     position: 'absolute',
-                    top: '-3px',
-                    right: '-3px',
+                    top: '-4px',
+                    right: '-4px',
                     backgroundColor: '#ef4444',
                     color: '#fff',
                     fontSize: '0.65rem',
