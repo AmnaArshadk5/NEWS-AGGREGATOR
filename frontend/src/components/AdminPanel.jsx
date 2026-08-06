@@ -1,16 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL } from '../config';
 import { 
   Users, FolderTree, BarChart3, Shield, Trash2, 
   UserCheck, UserX, Plus, Power, Loader2, Search,
-  TrendingUp, Activity, LogOut, Sun, Moon, Menu, X, KeyRound
+  TrendingUp, Activity, LogOut, Sun, Moon, Menu, X, KeyRound, ChevronDown
 } from 'lucide-react';
 
 export default function AdminPanel({ onCategoriesUpdated, onOpenChangePassword }) {
   const { token, user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('stats');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Night Mode / Dark Theme state
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -300,46 +312,56 @@ export default function AdminPanel({ onCategoriesUpdated, onOpenChangePassword }
             ))}
           </nav>
 
-          {/* User + Change Password + Sign Out */}
+          {/* User Profile Pill & Dropdown Menu */}
           <div className="admin-top-bar-right" style={styles.topBarRight}>
-            <button
-              onClick={toggleTheme}
-              style={{
-                ...styles.signOutBtn,
-                backgroundColor: isDarkMode ? 'rgba(251, 191, 36, 0.15)' : 'transparent',
-                color: isDarkMode ? '#fbbf24' : 'var(--text-secondary)',
-                border: '1px solid var(--border-light)',
-                marginRight: '8px'
-              }}
-              title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Night Mode'}
-            >
-              {isDarkMode ? <Sun size={15} color="#fbbf24" /> : <Moon size={15} color="var(--text-secondary)" />}
-              <span>{isDarkMode ? 'Day' : 'Night'}</span>
-            </button>
-
-            <button
-              onClick={onOpenChangePassword}
-              style={{
-                ...styles.signOutBtn,
-                border: '1px solid var(--border-light)',
-                marginRight: '8px'
-              }}
-              title="Change Password"
-            >
-              <KeyRound size={15} color="var(--accent-primary)" />
-              <span>Password</span>
-            </button>
-
-            <div style={styles.userPill}>
-              <div style={styles.avatar}>
-                {user?.username?.charAt(0).toUpperCase()}
+            <div style={{ position: 'relative' }} ref={dropdownRef}>
+              <div
+                style={styles.userPill}
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+              >
+                <div style={styles.avatar}>
+                  {user?.username?.charAt(0).toUpperCase()}
+                </div>
+                <span style={styles.userName}>{user?.username}</span>
+                <ChevronDown size={14} color="var(--text-muted)" />
               </div>
-              <span style={styles.userName}>{user?.username}</span>
+
+              {dropdownOpen && (
+                <div style={styles.dropdownMenu}>
+                  <div style={styles.dropdownHeader}>
+                    <span style={styles.dropdownUser}>{user?.username}</span>
+                    <span style={styles.dropdownRole}>ADMINISTRATOR</span>
+                  </div>
+                  <div style={styles.dropdownDivider} />
+
+                  <button
+                    onClick={() => { setDropdownOpen(false); if (onOpenChangePassword) onOpenChangePassword(); }}
+                    style={styles.dropdownItem}
+                  >
+                    <KeyRound size={15} color="var(--accent-primary)" />
+                    <span>Change Password</span>
+                  </button>
+
+                  <button
+                    onClick={() => { setDropdownOpen(false); toggleTheme(); }}
+                    style={styles.dropdownItem}
+                  >
+                    {isDarkMode ? <Sun size={15} color="#fbbf24" /> : <Moon size={15} color="var(--text-secondary)" />}
+                    <span>{isDarkMode ? 'Light Theme' : 'Night Mode'}</span>
+                  </button>
+
+                  <div style={styles.dropdownDivider} />
+
+                  <button
+                    onClick={() => { setDropdownOpen(false); logout(); }}
+                    style={{ ...styles.dropdownItem, color: '#ef4444' }}
+                  >
+                    <LogOut size={15} color="#ef4444" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              )}
             </div>
-            <button onClick={logout} style={styles.signOutBtn}>
-              <LogOut size={16} />
-              <span>Sign Out</span>
-            </button>
           </div>
 
           {/* Mobile Hamburger Toggle Button */}
@@ -1131,5 +1153,56 @@ const styles = {
     gap: '16px',
     color: 'var(--text-muted)',
     fontWeight: '500',
+  },
+  dropdownMenu: {
+    position: 'absolute',
+    top: 'calc(100% + 8px)',
+    right: 0,
+    width: '210px',
+    backgroundColor: 'var(--bg-card)',
+    borderRadius: 'var(--radius-md)',
+    border: '1px solid var(--border-light)',
+    boxShadow: 'var(--shadow-md)',
+    padding: '6px',
+    zIndex: 110,
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  dropdownHeader: {
+    padding: '8px 12px',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  dropdownUser: {
+    fontWeight: '700',
+    fontSize: '0.88rem',
+    color: 'var(--text-primary)',
+  },
+  dropdownRole: {
+    fontSize: '0.7rem',
+    fontWeight: '700',
+    color: 'var(--accent-primary)',
+    letterSpacing: '0.05em',
+  },
+  dropdownDivider: {
+    height: '1px',
+    backgroundColor: 'var(--border-light)',
+    margin: '4px 0',
+  },
+  dropdownItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '8px 12px',
+    borderRadius: 'var(--radius-sm)',
+    border: 'none',
+    backgroundColor: 'transparent',
+    color: 'var(--text-primary)',
+    fontSize: '0.85rem',
+    fontWeight: '500',
+    cursor: 'pointer',
+    textAlign: 'left',
+    width: '100%',
+    transition: 'background-color 0.15s ease',
   },
 };
