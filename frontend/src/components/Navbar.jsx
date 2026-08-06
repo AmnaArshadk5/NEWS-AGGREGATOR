@@ -170,8 +170,30 @@ export default function Navbar({
       {/* Top bar */}
       <nav style={styles.nav}>
         <div className="mobile-brand-row">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {/* Left Notification Bell Button */}
+          {/* Brand */}
+          <div
+            style={styles.brand}
+            onClick={() => {
+              handleClearSearch();
+              if (onGoHome) onGoHome();
+              else if (showBookmarksOnly) onToggleBookmarks();
+            }}
+          >
+            <span style={styles.brandText}>The Daily</span>
+            <span style={styles.brandAccent}>Wire</span>
+          </div>
+
+          {/* Far Right Most Actions: Hamburger Menu + Notification Bell */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              className="mobile-hamburger-btn"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle Navigation Menu"
+            >
+              {mobileMenuOpen ? <X size={22} color="var(--text-primary)" /> : <Menu size={22} color="var(--text-primary)" />}
+            </button>
+
+            {/* Right-Most Notification Bell Button */}
             {user && (
               <button
                 type="button"
@@ -216,29 +238,7 @@ export default function Navbar({
                 )}
               </button>
             )}
-
-            {/* Brand */}
-            <div
-              style={styles.brand}
-              onClick={() => {
-                handleClearSearch();
-                if (onGoHome) onGoHome();
-                else if (showBookmarksOnly) onToggleBookmarks();
-              }}
-            >
-              <span style={styles.brandText}>The Daily</span>
-              <span style={styles.brandAccent}>Wire</span>
-            </div>
           </div>
-
-          {/* Right Hamburger Toggle Button */}
-          <button
-            className="mobile-hamburger-btn"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle Navigation Menu"
-          >
-            {mobileMenuOpen ? <X size={22} color="var(--text-primary)" /> : <Menu size={22} color="var(--text-primary)" />}
-          </button>
         </div>
 
         {/* Search */}
