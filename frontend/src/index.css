@@ -734,3 +734,74 @@ table td {
     gap: 12px !important;
   }
 }
+
+/* ── Mobile Responsive Pagination Styles ── */
+.pagination-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 16px 20px;
+  background-color: var(--bg-card);
+  border-radius: 16px;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+  margin-top: 32px;
+  margin-bottom: 24px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+
+@media (max-width: 640px) {
+  .pagination-container {
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 14px 10px !important;
+    gap: 12px !important;
+  }
+
+  .pagination-info {
+    width: 100% !important;
+    justify-content: center !important;
+    text-align: center !important;
+    font-size: 0.78rem !important;
+  }
+
+  .pagination-controls {
+    width: 100% !important;
+    justify-content: center !important;
+    gap: 3px !important;
+  }
+
+  .pagination-btn-label {
+    display: none !important;
+  }
+
+  .pagination-nav-btn {
+    padding: 6px 8px !important;
+    min-width: 32px !important;
+    height: 32px !important;
+  }
+
+  .pagination-num-btn {
+    min-width: 30px !important;
+    height: 30px !important;
+    font-size: 0.8rem !important;
+    padding: 0 4px !important;
+  }
+
+  .pagination-size-wrap {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}

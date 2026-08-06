@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 export default function Pagination({
@@ -9,6 +9,16 @@ export default function Pagination({
   pageSize = 12,
   onPageSizeChange
 }) {
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 640 : false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   if (totalPages <= 1 && totalArticles <= pageSize) return null;
 
   const startItem = totalArticles > 0 ? (currentPage - 1) * pageSize + 1 : 0;
@@ -17,7 +27,7 @@ export default function Pagination({
   // Generate page numbers range for clean navigation buttons
   const getPageNumbers = () => {
     const pages = [];
-    const maxVisible = 5;
+    const maxVisible = isMobile ? 3 : 5;
 
     let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
     let endPage = Math.min(totalPages, startPage + maxVisible - 1);
@@ -35,41 +45,45 @@ export default function Pagination({
   const pageNumbers = getPageNumbers();
 
   return (
-    <div style={styles.container}>
+    <div className="pagination-container" style={styles.container}>
       {/* Items count summary */}
-      <div style={styles.infoText}>
-        Showing <strong>{startItem}–{endItem}</strong> of <strong>{totalArticles}</strong> articles
-        <span style={styles.pageBadge}>Page {currentPage} of {totalPages}</span>
+      <div className="pagination-info" style={styles.infoText}>
+        <span>Showing <strong>{startItem}–{endItem}</strong> of <strong>{totalArticles}</strong></span>
+        <span style={styles.pageBadge}>Page {currentPage}/{totalPages}</span>
       </div>
 
       {/* Page Navigation Controls */}
-      <div style={styles.controlsWrap}>
-        {/* First Page */}
-        <button
-          onClick={() => onPageChange(1)}
-          disabled={currentPage === 1}
-          style={styles.navBtn}
-          title="First Page"
-        >
-          <ChevronsLeft size={16} />
-        </button>
+      <div className="pagination-controls" style={styles.controlsWrap}>
+        {/* First Page (Hidden on mobile) */}
+        {!isMobile && (
+          <button
+            onClick={() => onPageChange(1)}
+            disabled={currentPage === 1}
+            className="pagination-nav-btn"
+            style={styles.navBtn}
+            title="First Page"
+          >
+            <ChevronsLeft size={16} />
+          </button>
+        )}
 
         {/* Previous Page */}
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
+          className="pagination-nav-btn"
           style={styles.navBtn}
           title="Previous Page"
         >
           <ChevronLeft size={16} />
-          <span style={styles.btnLabel}>Prev</span>
+          <span className="pagination-btn-label" style={styles.btnLabel}>Prev</span>
         </button>
 
         {/* Numbered Page Buttons */}
         <div style={styles.numberGroup}>
-          {pageNumbers[0] > 1 && (
+          {!isMobile && pageNumbers[0] > 1 && (
             <>
-              <button onClick={() => onPageChange(1)} style={styles.numBtn}>1</button>
+              <button onClick={() => onPageChange(1)} className="pagination-num-btn" style={styles.numBtn}>1</button>
               {pageNumbers[0] > 2 && <span style={styles.ellipsis}>…</span>}
             </>
           )}
@@ -78,6 +92,7 @@ export default function Pagination({
             <button
               key={num}
               onClick={() => onPageChange(num)}
+              className="pagination-num-btn"
               style={{
                 ...styles.numBtn,
                 ...(num === currentPage ? styles.numBtnActive : {})
@@ -87,10 +102,10 @@ export default function Pagination({
             </button>
           ))}
 
-          {pageNumbers[pageNumbers.length - 1] < totalPages && (
+          {!isMobile && pageNumbers[pageNumbers.length - 1] < totalPages && (
             <>
               {pageNumbers[pageNumbers.length - 1] < totalPages - 1 && <span style={styles.ellipsis}>…</span>}
-              <button onClick={() => onPageChange(totalPages)} style={styles.numBtn}>{totalPages}</button>
+              <button onClick={() => onPageChange(totalPages)} className="pagination-num-btn" style={styles.numBtn}>{totalPages}</button>
             </>
           )}
         </div>
@@ -99,37 +114,41 @@ export default function Pagination({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
+          className="pagination-nav-btn"
           style={styles.navBtn}
           title="Next Page"
         >
-          <span style={styles.btnLabel}>Next</span>
+          <span className="pagination-btn-label" style={styles.btnLabel}>Next</span>
           <ChevronRight size={16} />
         </button>
 
-        {/* Last Page */}
-        <button
-          onClick={() => onPageChange(totalPages)}
-          disabled={currentPage === totalPages}
-          style={styles.navBtn}
-          title="Last Page"
-        >
-          <ChevronsRight size={16} />
-        </button>
+        {/* Last Page (Hidden on mobile) */}
+        {!isMobile && (
+          <button
+            onClick={() => onPageChange(totalPages)}
+            disabled={currentPage === totalPages}
+            className="pagination-nav-btn"
+            style={styles.navBtn}
+            title="Last Page"
+          >
+            <ChevronsRight size={16} />
+          </button>
+        )}
       </div>
 
       {/* Page size selector */}
       {onPageSizeChange && (
-        <div style={styles.sizeWrap}>
+        <div className="pagination-size-wrap" style={styles.sizeWrap}>
           <span style={styles.sizeLabel}>Per page:</span>
           <select
             value={pageSize}
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
             style={styles.sizeSelect}
           >
-            <option value={12}>12 articles</option>
-            <option value={24}>24 articles</option>
-            <option value={36}>36 articles</option>
-            <option value={48}>48 articles</option>
+            <option value={12}>12 / page</option>
+            <option value={24}>24 / page</option>
+            <option value={36}>36 / page</option>
+            <option value={48}>48 / page</option>
           </select>
         </div>
       )}
