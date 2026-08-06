@@ -10,7 +10,7 @@ import ChangePasswordModal from './components/ChangePasswordModal';
 import ReadingProgressPage from './components/ReadingProgressPage';
 import { RefreshCw, Newspaper, AlertTriangle, SlidersHorizontal, Zap, Clock } from 'lucide-react';
 
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL_MS = 5 * 1000; // 5 seconds
 
 const DEFAULT_CATEGORIES = [
   { id: 1, name: 'General', slug: 'general' },

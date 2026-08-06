@@ -6,9 +6,9 @@ const proxyImg = (url) => url ? `${PROXY_BASE}${encodeURIComponent(url)}` : '';
 
 const router = express.Router();
 
-// ── Cache: 30-minute TTL to conserve daily API quota ──
+// ── Cache: 5-second TTL to ensure fresh multi-page results ──
 const cache = {};
-const CACHE_TTL_MS = 30 * 60 * 1000;
+const CACHE_TTL_MS = 5 * 1000;
 
 const NEWSAPI_CATEGORIES = ['business', 'entertainment', 'general', 'health', 'science', 'sports', 'technology'];
 
