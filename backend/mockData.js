@@ -354,5 +354,43 @@ export const mockNews = {
       source: { name: "Science Daily" },
       author: "Dr. Emily Frost"
     }
+  ],
+  food: [
+    {
+      title: "Mediterranean Diet Crowned Top Overall Diet for 7th Consecutive Year",
+      description: "Health experts and nutritionists reaffirm the plant-heavy Mediterranean eating style for longevity, heart health, and cognitive resilience.",
+      url: "https://www.foodandwine.com/mediterranean-diet-top-rank-2026",
+      urlToImage: "https://images.unsplash.com/photo-1540420773420-3366772f4999?q=80&w=800",
+      publishedAt: "2026-08-05T11:00:00Z",
+      source: { name: "Food & Wine" },
+      author: "Elena Rostova"
+    },
+    {
+      title: "Global Plant-Based Gourmet Revolution Expands to Michelin-Starred Restaurants",
+      description: "Renowned chefs worldwide are shifting towards fully plant-based tasting menus, driven by culinary innovation and sustainable dining demand.",
+      url: "https://www.eater.com/michelin-plant-based-gourmet-2026",
+      urlToImage: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=800",
+      publishedAt: "2026-08-04T09:30:00Z",
+      source: { name: "Eater" },
+      author: "Chef Marco Pierre"
+    },
+    {
+      title: "Vertical Farming Startups Lower Organic Produce Costs by 40%",
+      description: "Indoor hydroponic farms powered by renewable solar energy bring pesticide-free kale, strawberries, and herbs directly to urban grocery aisles.",
+      url: "https://www.agritecture.com/vertical-farming-2026",
+      urlToImage: "https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?q=80&w=800",
+      publishedAt: "2026-08-02T14:15:00Z",
+      source: { name: "AgFunder News" },
+      author: "Samantha Bell"
+    },
+    {
+      title: "The Rise of Artisan Fermented Foods: Kombucha, Kimchi, and Sourdough",
+      description: "Microbiome health research drives consumer demand for traditional fermented delicacies with verified probiotic benefits.",
+      url: "https://www.bonappetit.com/fermented-foods-trend-2026",
+      urlToImage: "https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=800",
+      publishedAt: "2026-07-28T16:00:00Z",
+      source: { name: "Bon Appétit" },
+      author: "Liam O'Connor"
+    }
   ]
 };

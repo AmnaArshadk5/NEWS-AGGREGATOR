@@ -213,30 +213,44 @@ async function fetchFromNewsData(apiKey, category, q, country) {
 
 // ── Mock fallback ──
 function getMockArticles(category, q) {
+  const all = Object.values(mockNews).flat();
   let articles = [];
-  if (!category || category === 'all') {
-    articles = Object.values(mockNews).flat();
+
+  if (!category || category === 'all' || category === 'general') {
+    articles = [...all];
   } else if (mockNews[category]) {
-    articles = mockNews[category];
+    // Start with category articles, and pad with all articles so there are at least 30+ articles
+    const catList = mockNews[category];
+    const rest = all.filter(a => !catList.some(c => c.url === a.url));
+    articles = [...catList, ...rest];
   } else {
-    const all = Object.values(mockNews).flat();
     articles = all.filter(art =>
       art.title?.toLowerCase().includes(category) ||
       art.description?.toLowerCase().includes(category)
     );
-    if (!articles.length) articles = mockNews.general || [];
+    if (articles.length < 15) {
+      articles = [...articles, ...all];
+    }
   }
 
   if (q) {
-    const all = Object.values(mockNews).flat();
-    articles = all.filter(art =>
-      art.title?.toLowerCase().includes(q) ||
-      art.description?.toLowerCase().includes(q) ||
-      art.source?.name?.toLowerCase().includes(q) ||
-      art.author?.toLowerCase().includes(q)
+    const qLower = q.toLowerCase();
+    const matches = all.filter(art =>
+      art.title?.toLowerCase().includes(qLower) ||
+      art.description?.toLowerCase().includes(qLower) ||
+      art.source?.name?.toLowerCase().includes(qLower) ||
+      art.author?.toLowerCase().includes(qLower)
     );
+    if (matches.length >= 5) {
+      articles = matches;
+    } else {
+      articles = [...matches, ...all];
+    }
   }
-  return articles;
+
+  // Deduplicate by title & url
+  const unique = Array.from(new Map(articles.map(item => [item.title + (item.url || ''), item])).values());
+  return unique;
 }
 
 // ── GET /api/news ──
