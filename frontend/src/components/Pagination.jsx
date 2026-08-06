@@ -24,7 +24,6 @@ export default function Pagination({
   const startItem = totalArticles > 0 ? (currentPage - 1) * pageSize + 1 : 0;
   const endItem = Math.min(currentPage * pageSize, totalArticles);
 
-  // Generate page numbers range for clean navigation buttons
   const getPageNumbers = () => {
     const pages = [];
     const maxVisible = isMobile ? 3 : 5;
@@ -45,46 +44,43 @@ export default function Pagination({
   const pageNumbers = getPageNumbers();
 
   return (
-    <div className="pagination-container" style={styles.container}>
-      {/* Items count summary */}
-      <div className="pagination-info" style={styles.infoText}>
-        <span>Showing <strong>{startItem}–{endItem}</strong> of <strong>{totalArticles}</strong></span>
-        <span style={styles.pageBadge}>Page {currentPage}/{totalPages}</span>
+    <div className="pagination-card">
+      {/* Top row: Status info */}
+      <div className="pagination-status">
+        <span className="pagination-status-text">
+          Showing <strong>{startItem}–{endItem}</strong> of <strong>{totalArticles}</strong>
+        </span>
+        <span className="pagination-badge">Page {currentPage}/{totalPages}</span>
       </div>
 
-      {/* Page Navigation Controls */}
-      <div className="pagination-controls" style={styles.controlsWrap}>
-        {/* First Page (Hidden on mobile) */}
+      {/* Middle row: Controls */}
+      <div className="pagination-buttons">
         {!isMobile && (
           <button
             onClick={() => onPageChange(1)}
             disabled={currentPage === 1}
-            className="pagination-nav-btn"
-            style={styles.navBtn}
+            className="pag-btn pag-btn-nav"
             title="First Page"
           >
             <ChevronsLeft size={16} />
           </button>
         )}
 
-        {/* Previous Page */}
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="pagination-nav-btn"
-          style={styles.navBtn}
+          className="pag-btn pag-btn-nav"
           title="Previous Page"
         >
           <ChevronLeft size={16} />
-          <span className="pagination-btn-label" style={styles.btnLabel}>Prev</span>
+          <span className="pag-btn-label">Prev</span>
         </button>
 
-        {/* Numbered Page Buttons */}
-        <div style={styles.numberGroup}>
+        <div className="pag-numbers">
           {!isMobile && pageNumbers[0] > 1 && (
             <>
-              <button onClick={() => onPageChange(1)} className="pagination-num-btn" style={styles.numBtn}>1</button>
-              {pageNumbers[0] > 2 && <span style={styles.ellipsis}>…</span>}
+              <button onClick={() => onPageChange(1)} className="pag-btn pag-btn-num">1</button>
+              {pageNumbers[0] > 2 && <span className="pag-dots">…</span>}
             </>
           )}
 
@@ -92,11 +88,7 @@ export default function Pagination({
             <button
               key={num}
               onClick={() => onPageChange(num)}
-              className="pagination-num-btn"
-              style={{
-                ...styles.numBtn,
-                ...(num === currentPage ? styles.numBtnActive : {})
-              }}
+              className={`pag-btn pag-btn-num ${num === currentPage ? 'active' : ''}`}
             >
               {num}
             </button>
@@ -104,31 +96,27 @@ export default function Pagination({
 
           {!isMobile && pageNumbers[pageNumbers.length - 1] < totalPages && (
             <>
-              {pageNumbers[pageNumbers.length - 1] < totalPages - 1 && <span style={styles.ellipsis}>…</span>}
-              <button onClick={() => onPageChange(totalPages)} className="pagination-num-btn" style={styles.numBtn}>{totalPages}</button>
+              {pageNumbers[pageNumbers.length - 1] < totalPages - 1 && <span className="pag-dots">…</span>}
+              <button onClick={() => onPageChange(totalPages)} className="pag-btn pag-btn-num">{totalPages}</button>
             </>
           )}
         </div>
 
-        {/* Next Page */}
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="pagination-nav-btn"
-          style={styles.navBtn}
+          className="pag-btn pag-btn-nav"
           title="Next Page"
         >
-          <span className="pagination-btn-label" style={styles.btnLabel}>Next</span>
+          <span className="pag-btn-label">Next</span>
           <ChevronRight size={16} />
         </button>
 
-        {/* Last Page (Hidden on mobile) */}
         {!isMobile && (
           <button
             onClick={() => onPageChange(totalPages)}
             disabled={currentPage === totalPages}
-            className="pagination-nav-btn"
-            style={styles.navBtn}
+            className="pag-btn pag-btn-nav"
             title="Last Page"
           >
             <ChevronsRight size={16} />
@@ -136,14 +124,14 @@ export default function Pagination({
         )}
       </div>
 
-      {/* Page size selector */}
+      {/* Bottom row: Per page dropdown */}
       {onPageSizeChange && (
-        <div className="pagination-size-wrap" style={styles.sizeWrap}>
-          <span style={styles.sizeLabel}>Per page:</span>
+        <div className="pagination-select-wrap">
+          <span className="pagination-select-label">Per page:</span>
           <select
             value={pageSize}
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
-            style={styles.sizeSelect}
+            className="pagination-select"
           >
             <option value={12}>12 / page</option>
             <option value={24}>24 / page</option>
@@ -155,113 +143,3 @@ export default function Pagination({
     </div>
   );
 }
-
-const styles = {
-  container: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '16px',
-    flexWrap: 'wrap',
-    padding: '20px 24px',
-    backgroundColor: 'var(--bg-card)',
-    borderRadius: '16px',
-    border: '1px solid var(--border-light)',
-    boxShadow: 'var(--shadow-sm)',
-    marginTop: '32px',
-    marginBottom: '24px',
-  },
-  infoText: {
-    fontSize: '0.86rem',
-    color: 'var(--text-secondary)',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    flexWrap: 'wrap',
-  },
-  pageBadge: {
-    backgroundColor: 'rgba(59, 130, 246, 0.12)',
-    color: 'var(--accent-primary)',
-    fontWeight: '700',
-    fontSize: '0.76rem',
-    padding: '3px 9px',
-    borderRadius: '12px',
-  },
-  controlsWrap: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-  },
-  navBtn: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '4px',
-    padding: '7px 12px',
-    borderRadius: '8px',
-    border: '1px solid var(--border-light)',
-    backgroundColor: 'var(--bg-input)',
-    color: 'var(--text-primary)',
-    fontSize: '0.84rem',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.15s ease',
-  },
-  btnLabel: {
-    display: 'inline-block',
-  },
-  numberGroup: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
-    margin: '0 4px',
-  },
-  numBtn: {
-    minWidth: '34px',
-    height: '34px',
-    padding: '0 8px',
-    borderRadius: '8px',
-    border: '1px solid var(--border-light)',
-    backgroundColor: 'var(--bg-card)',
-    color: 'var(--text-primary)',
-    fontSize: '0.86rem',
-    fontWeight: '600',
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: 'all 0.15s ease',
-  },
-  numBtnActive: {
-    backgroundColor: 'var(--accent-primary)',
-    color: '#ffffff',
-    borderColor: 'var(--accent-primary)',
-    boxShadow: '0 3px 10px rgba(59, 130, 246, 0.3)',
-    fontWeight: '800',
-  },
-  ellipsis: {
-    color: 'var(--text-muted)',
-    padding: '0 4px',
-    fontSize: '0.9rem',
-  },
-  sizeWrap: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-  },
-  sizeLabel: {
-    fontSize: '0.82rem',
-    color: 'var(--text-muted)',
-    fontWeight: '600',
-  },
-  sizeSelect: {
-    padding: '6px 12px',
-    borderRadius: '8px',
-    border: '1px solid var(--border-light)',
-    backgroundColor: 'var(--bg-input)',
-    color: 'var(--text-primary)',
-    fontSize: '0.82rem',
-    fontWeight: '600',
-    outline: 'none',
-    cursor: 'pointer',
-  },
-};
