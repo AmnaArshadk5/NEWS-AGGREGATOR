@@ -69,11 +69,15 @@ async function initializePgTables() {
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         username VARCHAR(255) UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
+        password_hash TEXT,
+        password TEXT,
         role VARCHAR(50) DEFAULT 'user',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    await pgPool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;`);
+    await pgPool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS password TEXT;`);
 
     await pgPool.query(`
       CREATE TABLE IF NOT EXISTS bookmarks (

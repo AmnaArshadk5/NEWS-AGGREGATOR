@@ -36,8 +36,8 @@ router.post('/register', authLimiter, async (req, res) => {
     const passwordHash = await bcrypt.hash(password, salt);
 
     const result = await runQuery(
-      'INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)',
-      [username.trim(), passwordHash, role]
+      'INSERT INTO users (username, password_hash, password, role) VALUES (?, ?, ?, ?)',
+      [username.trim(), passwordHash, passwordHash, role]
     );
 
     // JWT token valid for 7 days
@@ -72,7 +72,8 @@ router.post('/login', authLimiter, async (req, res) => {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password_hash);
+    const passHash = user.password_hash || user.password;
+    const isMatch = await bcrypt.compare(password, passHash);
     if (!isMatch) {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
