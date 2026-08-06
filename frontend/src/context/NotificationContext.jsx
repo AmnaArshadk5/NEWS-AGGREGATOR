@@ -153,13 +153,74 @@ export const NotificationProvider = ({ children }) => {
     }
   };
 
+  // Favorite Categories state
+  const userId = user?.id ? user.id : 'guest';
+  const [favoriteCategories, setFavoriteCategories] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`fav_categories_${userId}`);
+      return saved ? JSON.parse(saved) : ['Food', 'Technology'];
+    } catch {
+      return ['Food', 'Technology'];
+    }
+  });
+
+  useEffect(() => {
+    if (userId) {
+      try {
+        const saved = localStorage.getItem(`fav_categories_${userId}`);
+        setFavoriteCategories(saved ? JSON.parse(saved) : ['Food', 'Technology']);
+      } catch {
+        setFavoriteCategories(['Food', 'Technology']);
+      }
+    }
+  }, [userId]);
+
+  const saveCategories = (updated) => {
+    setFavoriteCategories(updated);
+    try {
+      localStorage.setItem(`fav_categories_${userId}`, JSON.stringify(updated));
+    } catch (e) {
+      console.error('Failed to save favorite categories:', e);
+    }
+  };
+
+  const toggleFavoriteCategory = (catName) => {
+    if (!catName) return;
+    const exists = favoriteCategories.some(c => c.toLowerCase() === catName.toLowerCase());
+    let updated;
+    if (exists) {
+      updated = favoriteCategories.filter(c => c.toLowerCase() !== catName.toLowerCase());
+    } else {
+      updated = [...favoriteCategories, catName];
+      // Generate live category notification
+      const newNotif = {
+        id: Date.now(),
+        title: `Category Subscribed: ${catName}`,
+        message: `Live alerts enabled for "${catName}". You'll receive updates when new ${catName} articles arrive!`,
+        is_read: false,
+        created_at: new Date().toISOString()
+      };
+      setNotifications(prev => [newNotif, ...prev]);
+      setUnreadCount(prev => prev + 1);
+    }
+    saveCategories(updated);
+  };
+
+  const isCategoryFavorite = (catName) => {
+    if (!catName) return false;
+    return favoriteCategories.some(c => c.toLowerCase() === catName.toLowerCase());
+  };
+
   return (
     <NotificationContext.Provider value={{
       followedChannels,
       notifications,
       unreadCount,
+      favoriteCategories,
       toggleFollowChannel,
       isChannelFollowed,
+      toggleFavoriteCategory,
+      isCategoryFavorite,
       markAllAsRead,
       clearAllNotifications,
       registerPushToken,

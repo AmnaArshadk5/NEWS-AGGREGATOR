@@ -71,6 +71,9 @@ async function initializePgTables() {
         username VARCHAR(255) UNIQUE NOT NULL,
         password_hash TEXT,
         password TEXT,
+        first_name VARCHAR(255),
+        email VARCHAR(255),
+        contact_number VARCHAR(100),
         role VARCHAR(50) DEFAULT 'user',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
@@ -78,6 +81,9 @@ async function initializePgTables() {
 
     await pgPool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;`);
     await pgPool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS password TEXT;`);
+    await pgPool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS first_name TEXT;`);
+    await pgPool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT;`);
+    await pgPool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS contact_number TEXT;`);
 
     await pgPool.query(`
       CREATE TABLE IF NOT EXISTS bookmarks (

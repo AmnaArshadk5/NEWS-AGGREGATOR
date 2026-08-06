@@ -116,14 +116,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (username, password) => {
+  const register = async (username, password, extraFields = {}) => {
     setAuthError(null);
     setSessionNotice(null);
     try {
       const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({
+          username,
+          password,
+          firstName: extraFields.firstName,
+          email: extraFields.email,
+          contactNumber: extraFields.contactNumber
+        })
       });
 
       const data = await response.json();

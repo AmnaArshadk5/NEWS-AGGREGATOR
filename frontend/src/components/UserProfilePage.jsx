@@ -3,8 +3,11 @@ import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import {
   User, Shield, KeyRound, LogOut, Bookmark, BookOpen,
-  Rss, Check, Plus, ArrowLeft, ExternalLink, Sparkles, Newspaper
+  Rss, Check, Plus, ArrowLeft, ExternalLink, Sparkles, Newspaper,
+  Mail, Phone, Bell, Tag
 } from 'lucide-react';
+
+const CATEGORY_LIST = ['Food', 'Technology', 'Business', 'Entertainment', 'Sports', 'Health', 'Science'];
 
 export default function UserProfilePage({
   onGoHome,
@@ -13,9 +16,12 @@ export default function UserProfilePage({
   progressCount = 0
 }) {
   const { user, logout, bookmarks } = useAuth();
-  const { followedChannels, toggleFollowChannel } = useNotifications();
+  const { followedChannels, toggleFollowChannel, favoriteCategories, toggleFavoriteCategory, isCategoryFavorite } = useNotifications();
 
   const username = user?.username || 'User';
+  const firstName = user?.firstName || user?.first_name || '';
+  const email = user?.email || '';
+  const contactNumber = user?.contactNumber || user?.contact_number || '';
   const role = user?.role ? user.role.toUpperCase() : 'MEMBER';
   const joinedDate = user?.created_at
     ? new Date(user.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
@@ -43,13 +49,31 @@ export default function UserProfilePage({
 
           <div style={styles.userDetails}>
             <div style={styles.nameRow}>
-              <h1 style={styles.usernameText}>{username}</h1>
+              <h1 style={styles.usernameText}>{firstName ? `${firstName} (@${username})` : username}</h1>
               <span style={role === 'ADMIN' ? styles.adminBadge : styles.memberBadge}>
                 {role === 'ADMIN' && <Shield size={12} />}
                 <span>{role}</span>
               </span>
             </div>
-            <p style={styles.joinedText}>Joined {joinedDate}</p>
+
+            {/* Extended User Info Row */}
+            <div style={styles.contactRow}>
+              {email && (
+                <span style={styles.contactInfoTag}>
+                  <Mail size={13} color="var(--accent-primary)" />
+                  <span>{email}</span>
+                </span>
+              )}
+              {contactNumber && (
+                <span style={styles.contactInfoTag}>
+                  <Phone size={13} color="var(--accent-primary)" />
+                  <span>{contactNumber}</span>
+                </span>
+              )}
+              <span style={styles.contactInfoTag}>
+                <span>Joined {joinedDate}</span>
+              </span>
+            </div>
 
             {/* Quick Stats Tags */}
             <div style={styles.statsRow}>
@@ -78,6 +102,38 @@ export default function UserProfilePage({
               <span>Sign Out</span>
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* ── FAVORITE CATEGORIES NOTIFICATIONS SECTION ── */}
+      <div style={styles.sectionHeader}>
+        <div style={styles.sectionTitleRow}>
+          <Bell size={20} color="var(--accent-primary)" />
+          <h2 style={styles.sectionTitle}>Favorite Category Notifications</h2>
+        </div>
+        <p style={styles.sectionSubtitle}>
+          Select your favorite categories (e.g. <strong>Food</strong>, <strong>Technology</strong>) to receive live breaking news alerts whenever new articles arrive.
+        </p>
+        <div style={styles.categoryPillsWrap}>
+          {CATEGORY_LIST.map((cat) => {
+            const active = isCategoryFavorite(cat);
+            return (
+              <button
+                key={cat}
+                onClick={() => toggleFavoriteCategory(cat)}
+                style={{
+                  ...styles.catPill,
+                  backgroundColor: active ? 'var(--accent-primary)' : 'var(--bg-input)',
+                  color: active ? '#ffffff' : 'var(--text-primary)',
+                  borderColor: active ? 'var(--accent-primary)' : 'var(--border-light)',
+                }}
+                title={active ? `Disable notifications for ${cat}` : `Enable notifications for ${cat}`}
+              >
+                {active ? <Check size={14} /> : <Plus size={14} />}
+                <span>{cat} Alerts</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -251,6 +307,41 @@ const styles = {
     fontSize: '0.72rem',
     fontWeight: '800',
     letterSpacing: '0.05em',
+  },
+  contactRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    flexWrap: 'wrap',
+    marginTop: '6px',
+    marginBottom: '12px',
+  },
+  contactInfoTag: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '4px',
+    fontSize: '0.82rem',
+    color: 'var(--text-muted)',
+  },
+  categoryPillsWrap: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    flexWrap: 'wrap',
+    marginTop: '12px',
+    marginBottom: '28px',
+  },
+  catPill: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '8px 16px',
+    borderRadius: '20px',
+    border: '1px solid var(--border-light)',
+    fontSize: '0.84rem',
+    fontWeight: '700',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
   },
   joinedText: {
     fontSize: '0.85rem',

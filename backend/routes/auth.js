@@ -10,7 +10,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'news_aggregator_secret_key_12345';
 
 // POST /api/auth/register (Protected by authLimiter - max 5 requests / 5 mins)
 router.post('/register', authLimiter, async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, firstName, email, contactNumber } = req.body;
 
   if (!username || !password) {
     return res.status(400).json({ error: 'Username and password are required' });
@@ -35,9 +35,13 @@ router.post('/register', authLimiter, async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
+    const fName = firstName ? firstName.trim() : null;
+    const mail = email ? email.trim() : null;
+    const phone = contactNumber ? contactNumber.trim() : null;
+
     const result = await runQuery(
-      'INSERT INTO users (username, password_hash, password, role) VALUES (?, ?, ?, ?)',
-      [username.trim(), passwordHash, passwordHash, role]
+      'INSERT INTO users (username, password_hash, password, first_name, email, contact_number, role) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [username.trim(), passwordHash, passwordHash, fName, mail, phone, role]
     );
 
     // JWT token valid for 7 days
@@ -50,7 +54,14 @@ router.post('/register', authLimiter, async (req, res) => {
     res.status(201).json({
       message: 'User registered successfully',
       token,
-      user: { id: result.id, username: username.trim(), role }
+      user: {
+        id: result.id,
+        username: username.trim(),
+        firstName: fName,
+        email: mail,
+        contactNumber: phone,
+        role
+      }
     });
   } catch (err) {
     console.error('Registration error:', err);
@@ -90,7 +101,14 @@ router.post('/login', authLimiter, async (req, res) => {
     res.json({
       message: 'Logged in successfully',
       token,
-      user: { id: user.id, username: user.username, role: userRole }
+      user: {
+        id: user.id,
+        username: user.username,
+        firstName: user.first_name,
+        email: user.email,
+        contactNumber: user.contact_number,
+        role: userRole
+      }
     });
   } catch (err) {
     console.error('Login error:', err);
@@ -101,11 +119,21 @@ router.post('/login', authLimiter, async (req, res) => {
 // GET /api/auth/me
 router.get('/me', authMiddleware, async (req, res) => {
   try {
-    const user = await getQuery('SELECT id, username, role, created_at FROM users WHERE id = ?', [req.user.id]);
+    const user = await getQuery('SELECT id, username, first_name, email, contact_number, role, created_at FROM users WHERE id = ?', [req.user.id]);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-    res.json({ user });
+    res.json({
+      user: {
+        id: user.id,
+        username: user.username,
+        firstName: user.first_name,
+        email: user.email,
+        contactNumber: user.contact_number,
+        role: user.role,
+        created_at: user.created_at
+      }
+    });
   } catch (err) {
     console.error('Auth-me error:', err);
     res.status(500).json({ error: 'Internal server error' });
