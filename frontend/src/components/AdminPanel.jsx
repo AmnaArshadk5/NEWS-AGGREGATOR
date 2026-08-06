@@ -4,10 +4,10 @@ import { API_BASE_URL } from '../config';
 import { 
   Users, FolderTree, BarChart3, Shield, Trash2, 
   UserCheck, UserX, Plus, Power, Loader2, Search,
-  TrendingUp, Activity, LogOut, Sun, Moon, Menu, X
+  TrendingUp, Activity, LogOut, Sun, Moon, Menu, X, KeyRound
 } from 'lucide-react';
 
-export default function AdminPanel({ onCategoriesUpdated }) {
+export default function AdminPanel({ onCategoriesUpdated, onOpenChangePassword }) {
   const { token, user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('stats');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -300,7 +300,7 @@ export default function AdminPanel({ onCategoriesUpdated }) {
             ))}
           </nav>
 
-          {/* User + Sign Out */}
+          {/* User + Change Password + Sign Out */}
           <div className="admin-top-bar-right" style={styles.topBarRight}>
             <button
               onClick={toggleTheme}
@@ -315,6 +315,19 @@ export default function AdminPanel({ onCategoriesUpdated }) {
             >
               {isDarkMode ? <Sun size={15} color="#fbbf24" /> : <Moon size={15} color="var(--text-secondary)" />}
               <span>{isDarkMode ? 'Day' : 'Night'}</span>
+            </button>
+
+            <button
+              onClick={onOpenChangePassword}
+              style={{
+                ...styles.signOutBtn,
+                border: '1px solid var(--border-light)',
+                marginRight: '8px'
+              }}
+              title="Change Password"
+            >
+              <KeyRound size={15} color="var(--accent-primary)" />
+              <span>Password</span>
             </button>
 
             <div style={styles.userPill}>
@@ -364,6 +377,14 @@ export default function AdminPanel({ onCategoriesUpdated }) {
                   {tab.count !== undefined && <span className="mobile-badge">{tab.count}</span>}
                 </button>
               ))}
+
+              <button
+                onClick={() => { setMobileMenuOpen(false); if (onOpenChangePassword) onOpenChangePassword(); }}
+                className="mobile-menu-btn"
+              >
+                <KeyRound size={18} color="var(--accent-primary)" />
+                <span>Change Password</span>
+              </button>
 
               <button onClick={toggleTheme} className="mobile-menu-btn">
                 {isDarkMode ? <Sun size={18} color="#fbbf24" /> : <Moon size={18} color="var(--text-secondary)" />}

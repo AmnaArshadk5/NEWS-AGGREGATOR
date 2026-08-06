@@ -364,7 +364,10 @@ const fetchNews = useCallback(async (forceRefresh = false) => {
   if (user.role === 'admin') {
     return (
       <>
-        <AdminPanel onCategoriesUpdated={fetchCategories} />
+        <AdminPanel 
+          onCategoriesUpdated={fetchCategories} 
+          onOpenChangePassword={() => setIsChangePasswordOpen(true)}
+        />
         <ChangePasswordModal 
           isOpen={isChangePasswordOpen} 
           onClose={() => setIsChangePasswordOpen(false)} 

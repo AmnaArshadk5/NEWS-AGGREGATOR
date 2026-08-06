@@ -109,7 +109,27 @@ async function initializePgTables() {
     // Ensure username 'admin' always has role 'admin'
     await pgPool.query("UPDATE users SET role = 'admin' WHERE username = 'admin';");
 
-    console.log('[Database] PostgreSQL tables initialized.');
+    // Seed default categories into PostgreSQL if empty
+    const defaultCategories = [
+      { name: 'General', slug: 'general', sort_order: 1 },
+      { name: 'Technology', slug: 'technology', sort_order: 2 },
+      { name: 'Business', slug: 'business', sort_order: 3 },
+      { name: 'Sports', slug: 'sports', sort_order: 4 },
+      { name: 'Entertainment', slug: 'entertainment', sort_order: 5 },
+      { name: 'Health', slug: 'health', sort_order: 6 },
+      { name: 'Science', slug: 'science', sort_order: 7 }
+    ];
+
+    for (const cat of defaultCategories) {
+      await pgPool.query(
+        `INSERT INTO categories (name, slug, sort_order, enabled) 
+         VALUES ($1, $2, $3, 1) 
+         ON CONFLICT (slug) DO NOTHING`,
+        [cat.name, cat.slug, cat.sort_order]
+      );
+    }
+
+    console.log('[Database] PostgreSQL tables initialized with default categories.');
   } catch (err) {
     console.error('[Database] Error initializing PostgreSQL tables:', err.message);
   }
