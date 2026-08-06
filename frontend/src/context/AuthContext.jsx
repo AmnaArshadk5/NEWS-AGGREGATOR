@@ -15,14 +15,19 @@ function isTokenExpired(token) {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('news_auth_token') || null);
+  const [token, setToken] = useState(() => {
+    try {
+      localStorage.removeItem('news_auth_token'); // Wipe legacy persistent localStorage token
+      return sessionStorage.getItem('news_auth_token') || null;
+    } catch {
+      return null;
+    }
+  });
   const [bookmarks, setBookmarks] = useState([]);
   const [isLoadingBookmarks, setIsLoadingBookmarks] = useState(false);
   const [authError, setAuthError] = useState(null);
   const [sessionNotice, setSessionNotice] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  // (Inactivity auto-logout removed — token TTL of 7 days handles session expiry)
 
   // Validate stored token on mount
   useEffect(() => {
@@ -34,7 +39,7 @@ export const AuthProvider = ({ children }) => {
 
       // 1. Check expiry client-side first — avoids a 403 network request entirely
       if (isTokenExpired(token)) {
-        localStorage.removeItem('news_auth_token');
+        sessionStorage.removeItem('news_auth_token');
         setToken(null);
         setUser(null);
         setLoading(false);
@@ -105,7 +110,7 @@ export const AuthProvider = ({ children }) => {
         throw new Error(data.error || 'Login failed');
       }
 
-      localStorage.setItem('news_auth_token', data.token);
+      sessionStorage.setItem('news_auth_token', data.token);
       setToken(data.token);
       setUser(data.user);
       fetchBookmarks(data.token);
@@ -138,7 +143,7 @@ export const AuthProvider = ({ children }) => {
         throw new Error(data.error || 'Registration failed');
       }
 
-      localStorage.setItem('news_auth_token', data.token);
+      sessionStorage.setItem('news_auth_token', data.token);
       setToken(data.token);
       setUser(data.user);
       setBookmarks([]);
@@ -150,6 +155,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = (noticeReason = null) => {
+    sessionStorage.removeItem('news_auth_token');
     localStorage.removeItem('news_auth_token');
     setToken(null);
     setUser(null);
