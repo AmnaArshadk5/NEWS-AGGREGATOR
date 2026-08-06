@@ -912,3 +912,20 @@ input::-webkit-credentials-auto-fill-button {
   visibility: hidden !important;
   pointer-events: none !important;
 }
+
+/* ── Mobile Responsive Notification Overlay Modal ── */
+@media (max-width: 640px) {
+  .notif-modal-overlay {
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 16px !important;
+    background-color: rgba(0, 0, 0, 0.65) !important;
+  }
+
+  .notif-modal-card {
+    width: 100% !important;
+    max-width: 360px !important;
+    margin: 0 auto !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35) !important;
+  }
+}

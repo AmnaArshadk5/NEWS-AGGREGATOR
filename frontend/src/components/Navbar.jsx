@@ -170,21 +170,8 @@ export default function Navbar({
       {/* Top bar */}
       <nav style={styles.nav}>
         <div className="mobile-brand-row">
-          {/* Brand */}
-          <div
-            style={styles.brand}
-            onClick={() => {
-              handleClearSearch();
-              if (onGoHome) onGoHome();
-              else if (showBookmarksOnly) onToggleBookmarks();
-            }}
-          >
-            <span style={styles.brandText}>The Daily</span>
-            <span style={styles.brandAccent}>Wire</span>
-          </div>
-
-          {/* Mobile Actions: Notification Bell + Hamburger Button */}
-          <div className="mobile-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {/* Left Notification Bell Button */}
             {user && (
               <button
                 type="button"
@@ -230,14 +217,28 @@ export default function Navbar({
               </button>
             )}
 
-            <button
-              className="mobile-hamburger-btn"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle Navigation Menu"
+            {/* Brand */}
+            <div
+              style={styles.brand}
+              onClick={() => {
+                handleClearSearch();
+                if (onGoHome) onGoHome();
+                else if (showBookmarksOnly) onToggleBookmarks();
+              }}
             >
-              {mobileMenuOpen ? <X size={22} color="var(--text-primary)" /> : <Menu size={22} color="var(--text-primary)" />}
-            </button>
+              <span style={styles.brandText}>The Daily</span>
+              <span style={styles.brandAccent}>Wire</span>
+            </div>
           </div>
+
+          {/* Right Hamburger Toggle Button */}
+          <button
+            className="mobile-hamburger-btn"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle Navigation Menu"
+          >
+            {mobileMenuOpen ? <X size={22} color="var(--text-primary)" /> : <Menu size={22} color="var(--text-primary)" />}
+          </button>
         </div>
 
         {/* Search */}
