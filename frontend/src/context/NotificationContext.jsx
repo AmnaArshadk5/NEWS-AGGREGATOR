@@ -9,6 +9,7 @@ export const NotificationProvider = ({ children }) => {
   const [followedChannels, setFollowedChannels] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [activeToast, setActiveToast] = useState(null);
   const [loading, setLoading] = useState(false);
 
   // Fetch followed channels list
