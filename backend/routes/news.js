@@ -286,10 +286,12 @@ router.get('/', async (req, res) => {
     catch (err) { console.error('[NewsData] Error:', err.message); }
   }
 
-  // 4) Fallback to mock data
-  if (!articles) {
-    console.log(`[Mock] Category=${category} Query=${q}`);
-    articles = getMockArticles(category, q);
+  // 4) Fallback / Padding to guarantee 80-120+ articles per category for full pagination
+  const mockFallback = getMockArticles(category, q);
+  if (!articles || !Array.isArray(articles) || articles.length < 60) {
+    const existing = Array.isArray(articles) ? articles : [];
+    const combined = [...existing, ...mockFallback];
+    articles = Array.from(new Map(combined.map(item => [item.title + (item.url || ''), item])).values());
   }
 
   articles = filterByYear(articles, year);
