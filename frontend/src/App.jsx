@@ -107,10 +107,11 @@ import PushNotificationBanner from './components/PushNotificationBanner';
 import ChannelPage from './components/ChannelPage';
 import UserProfilePage from './components/UserProfilePage';
 import Pagination from './components/Pagination';
+import NotificationToast from './components/NotificationToast';
 
 export default function App() {
   const { user, bookmarks, isLoadingBookmarks, sessionNotice, setSessionNotice } = useAuth();
-  const { processLiveArticleNotifications } = useNotifications();
+  const { processLiveArticleNotifications, activeToast, dismissToast } = useNotifications();
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -454,6 +455,11 @@ const fetchNews = useCallback(async (forceRefresh = false) => {
         onOpenProfile={toggleProfileView}
       />
       <PushNotificationBanner />
+      <NotificationToast
+        toast={activeToast}
+        onClose={dismissToast}
+        onSelectChannel={handleSelectChannel}
+      />
 
       <main style={styles.main}>
         {selectedChannel ? (

@@ -288,16 +288,40 @@ export const NotificationProvider = ({ children }) => {
         console.error('Error saving notified URLs:', e);
       }
 
+      setActiveToast(newAlerts[0]);
       setNotifications(prev => [...newAlerts, ...prev]);
       setUnreadCount(prev => prev + newAlerts.length);
     }
   }, [followedChannels, favoriteCategories, userId]);
+
+  // Real-Time Background Polling Engine (polls every 10 seconds)
+  useEffect(() => {
+    const pollInterval = setInterval(async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/news`);
+        if (res.ok) {
+          const latest = await res.json();
+          if (Array.isArray(latest)) {
+            processLiveArticleNotifications(latest);
+          }
+        }
+      } catch {
+        // Silent catch for background polling
+      }
+    }, 10000);
+
+    return () => clearInterval(pollInterval);
+  }, [processLiveArticleNotifications]);
+
+  const dismissToast = () => setActiveToast(null);
 
   return (
     <NotificationContext.Provider value={{
       followedChannels,
       notifications,
       unreadCount,
+      activeToast,
+      dismissToast,
       favoriteCategories,
       toggleFollowChannel,
       isChannelFollowed,
