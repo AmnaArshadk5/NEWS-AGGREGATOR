@@ -6,7 +6,7 @@ import { Bookmark, Clock, User, BookOpen, CheckCircle2, Plus, Check } from 'luci
 import ArticleModal from './ArticleModal';
 
 // NewsCard component with reading progress tracking
-export default function NewsCard({ article = {}, onRequireAuth }) {
+export default function NewsCard({ article = {}, onRequireAuth, onSelectChannel }) {
   const { user, toggleBookmark, isBookmarked } = useAuth();
   const { toggleFollowChannel, isChannelFollowed } = useNotifications();
   const userId = user?.id ? user.id : 'guest';
@@ -140,7 +140,17 @@ export default function NewsCard({ article = {}, onRequireAuth }) {
           {/* Source + Date row */}
           <div style={styles.metaRow}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span className="badge badge-accent">{sourceName}</span>
+              <span
+                className="badge badge-accent"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onSelectChannel) onSelectChannel(sourceName);
+                }}
+                style={{ cursor: 'pointer' }}
+                title={`View all news from ${sourceName}`}
+              >
+                {sourceName}
+              </span>
               <button
                 onClick={handleFollowClick}
                 style={{
@@ -252,6 +262,7 @@ export default function NewsCard({ article = {}, onRequireAuth }) {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onProgressUpdate={handleProgressUpdate}
+        onSelectChannel={onSelectChannel}
       />
     </>
   );

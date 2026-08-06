@@ -3,7 +3,7 @@ import { X, ExternalLink, Bookmark, Clock, User, Share2, Check, BookOpen, Loader
 import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL as API_BASE } from '../config';
 
-export default function ArticleModal({ article, isOpen, onClose, onProgressUpdate }) {
+export default function ArticleModal({ article, isOpen, onClose, onProgressUpdate, onSelectChannel }) {
   const title       = article?.title       || 'Untitled Article';
   const description = article?.description || '';
   const url         = article?.url         || '#';
@@ -131,7 +131,17 @@ export default function ArticleModal({ article, isOpen, onClose, onProgressUpdat
         {/* Toolbar */}
         <div style={styles.toolbar}>
           <div style={styles.toolbarLeft}>
-            <span className="badge badge-accent">{sourceName}</span>
+            <span
+              className="badge badge-accent"
+              onClick={() => {
+                handleClose();
+                if (onSelectChannel) onSelectChannel(sourceName);
+              }}
+              style={{ cursor: 'pointer' }}
+              title={`View all news from ${sourceName}`}
+            >
+              {sourceName}
+            </span>
             {readPercent > 0 && (
               <span style={styles.pctBadge}>
                 {readPercent === 100 ? '✓ Fully Read' : `${readPercent}% read`}

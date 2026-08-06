@@ -103,6 +103,7 @@ const COUNTRY_OPTIONS = [
 ];
 
 import PushNotificationBanner from './components/PushNotificationBanner';
+import ChannelPage from './components/ChannelPage';
 
 export default function App() {
   const { user, bookmarks, isLoadingBookmarks, sessionNotice, setSessionNotice } = useAuth();
@@ -113,6 +114,7 @@ export default function App() {
   // Dynamic Categories from Backend API
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedChannel, setSelectedChannel] = useState(null);
 
   // Per-user 5-min client-side cache
   const newsCache = useRef({});
@@ -263,25 +265,36 @@ const fetchNews = useCallback(async (forceRefresh = false) => {
     fetchNews();
   }, [selectedCategory, searchQuery, showBookmarksOnly, sortBy, year, timeframe, selectedCountry, fetchNews]);
 
+  const handleSelectChannel = (channelName) => {
+    setShowProgressOnly(false);
+    setShowBookmarksOnly(false);
+    setSelectedCategory('');
+    setSelectedChannel(channelName);
+  };
+
   const handleCategorySelect = (categorySlug) => {
     setShowProgressOnly(false);
     setShowBookmarksOnly(false);
+    setSelectedChannel(null);
     setSelectedCategory(categorySlug);
   };
 
   const handleSearch = (query) => {
     setShowProgressOnly(false);
     setShowBookmarksOnly(false);
+    setSelectedChannel(null);
     setSearchQuery(query);
   };
 
   const toggleBookmarksView = () => {
     setShowProgressOnly(false);
+    setSelectedChannel(null);
     setShowBookmarksOnly(!showBookmarksOnly);
   };
 
   const toggleProgressView = () => {
     setShowBookmarksOnly(false);
+    setSelectedChannel(null);
     setShowProgressOnly(!showProgressOnly);
   };
 
@@ -382,6 +395,7 @@ const fetchNews = useCallback(async (forceRefresh = false) => {
   const resetHome = () => {
     setShowBookmarksOnly(false);
     setShowProgressOnly(false);
+    setSelectedChannel(null);
     setSearchQuery('');
     if (categories.length > 0) {
       setSelectedCategory(categories[0].slug);
@@ -405,7 +419,15 @@ const fetchNews = useCallback(async (forceRefresh = false) => {
       <PushNotificationBanner />
 
       <main style={styles.main}>
-        {showProgressOnly ? (
+        {selectedChannel ? (
+          <ChannelPage
+            channelName={selectedChannel}
+            articles={articles}
+            onGoBack={() => setSelectedChannel(null)}
+            onRequireAuth={() => setIsAuthModalOpen(true)}
+            onSelectChannel={handleSelectChannel}
+          />
+        ) : showProgressOnly ? (
           <ReadingProgressPage onGoHome={resetHome} />
         ) : (
           <div style={styles.container}>
@@ -601,6 +623,7 @@ const fetchNews = useCallback(async (forceRefresh = false) => {
                   key={article.url || index}
                   article={article}
                   onRequireAuth={() => setIsAuthModalOpen(true)}
+                  onSelectChannel={handleSelectChannel}
                 />
               ))}
             </div>
