@@ -106,6 +106,9 @@ async function initializePgTables() {
       )
     `);
 
+    // Ensure username 'admin' always has role 'admin'
+    await pgPool.query("UPDATE users SET role = 'admin' WHERE username = 'admin';");
+
     console.log('[Database] PostgreSQL tables initialized.');
   } catch (err) {
     console.error('[Database] Error initializing PostgreSQL tables:', err.message);
