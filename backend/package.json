@@ -7,8 +7,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "migrate:pg": "node migrate-to-pg.js",
-    "show:pg": "node show_pg_db.js"
+    "migrate:pg": "node migrate-to-pg.js"
   },
   "dependencies": {
     "@extractus/article-extractor": "^8.1.0",
