@@ -20,7 +20,8 @@ export default function Navbar({
   openAuthModal,
   openAdminPanel,
   openChangePasswordModal,
-  onGoHome
+  onGoHome,
+  onSelectChannel
 }) {
   const { user, logout, bookmarks } = useAuth();
   const { notifications, unreadCount, markAllAsRead, clearAllNotifications, followedChannels } = useNotifications();
@@ -410,11 +411,18 @@ export default function Navbar({
                         notifications.map((n) => (
                           <div
                             key={n.id}
+                            onClick={() => {
+                              if (n.source_name && onSelectChannel) {
+                                setNotifOpen(false);
+                                onSelectChannel(n.source_name);
+                              }
+                            }}
                             style={{
                               padding: '10px 12px',
                               borderBottom: '1px solid var(--border-light)',
                               backgroundColor: n.is_read ? 'transparent' : 'rgba(59, 130, 246, 0.05)',
                               fontSize: '0.82rem',
+                              cursor: n.source_name ? 'pointer' : 'default',
                             }}
                           >
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>

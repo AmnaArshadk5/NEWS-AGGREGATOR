@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNotifications } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE_URL } from '../config';
 import NewsCard from './NewsCard';
-import { ArrowLeft, Rss, Check, Plus, Search, Newspaper, Sparkles } from 'lucide-react';
+import { ArrowLeft, Rss, Check, Plus, Search, Newspaper, Sparkles, Loader2 } from 'lucide-react';
 
 export default function ChannelPage({
   channelName,
@@ -15,17 +16,47 @@ export default function ChannelPage({
   const { toggleFollowChannel, isChannelFollowed } = useNotifications();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('newest');
+  const [remoteArticles, setRemoteArticles] = useState([]);
+  const [fetchingRemote, setFetchingRemote] = useState(false);
 
   const followed = isChannelFollowed(channelName);
 
-  // Filter articles belonging to this specific channel / source
-  const channelArticles = articles.filter(art => {
-    const sName = art?.source?.name || art?.source_name || '';
-    return sName.toLowerCase() === (channelName || '').toLowerCase();
+  // Fetch dedicated channel articles from backend API
+  useEffect(() => {
+    if (!channelName) return;
+    const fetchChannelArticles = async () => {
+      setFetchingRemote(true);
+      try {
+        const res = await fetch(`${API_BASE_URL}/news?q=${encodeURIComponent(channelName)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) setRemoteArticles(data);
+        }
+      } catch (err) {
+        console.error('Error fetching remote channel articles:', err);
+      } finally {
+        setFetchingRemote(false);
+      }
+    };
+    fetchChannelArticles();
+  }, [channelName]);
+
+  // Combine parent articles and remote fetched channel articles, deduplicated by URL
+  const allAvailable = [...articles, ...remoteArticles];
+  const uniqueArticles = Array.from(new Map(allAvailable.map(item => [item.url, item])).values());
+
+  const targetName = (channelName || '').toLowerCase().trim();
+  const channelArticles = uniqueArticles.filter(art => {
+    const sName = (art?.source?.name || art?.source_name || '').toLowerCase().trim();
+    if (!sName || !targetName) return false;
+    return sName === targetName || sName.includes(targetName) || targetName.includes(sName);
   });
 
+  // Fall back to remoteArticles if filter matched 0 items
+  const displaySource = channelArticles.length > 0 ? channelArticles : remoteArticles;
+
   // Apply search query within channel
-  const filteredArticles = channelArticles.filter(art => {
+  const filteredArticles = displaySource.filter(art => {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     const title = (art?.title || '').toLowerCase();
@@ -82,7 +113,7 @@ export default function ChannelPage({
             <div style={styles.statsRow}>
               <span style={styles.statTag}>
                 <Newspaper size={14} />
-                <span>{channelArticles.length} Article{channelArticles.length !== 1 ? 's' : ''}</span>
+                <span>{displaySource.length} Article{displaySource.length !== 1 ? 's' : ''}</span>
               </span>
               <span style={styles.statTag}>
                 <Rss size={14} color={followed ? 'var(--accent-primary)' : 'var(--text-muted)'} />

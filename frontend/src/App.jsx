@@ -415,6 +415,7 @@ const fetchNews = useCallback(async (forceRefresh = false) => {
         progressCount={getInProgressCount()}
         openChangePasswordModal={() => setIsChangePasswordOpen(true)}
         onGoHome={resetHome}
+        onSelectChannel={handleSelectChannel}
       />
       <PushNotificationBanner />
 
