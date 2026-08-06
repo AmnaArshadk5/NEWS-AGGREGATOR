@@ -44,6 +44,24 @@ app.use((req, res, next) => {
   next();
 });
 
+// Root API Welcome & Health Check Endpoints
+app.get('/', (req, res) => {
+  res.json({
+    status: 'online',
+    message: 'The Daily Wire API Server is active and operational.',
+    documentation: '/api-docs',
+    categories: '/api/categories'
+  });
+});
+
+app.get('/api', (req, res) => {
+  res.json({
+    status: 'online',
+    message: 'The Daily Wire REST API Root',
+    documentation: '/api-docs'
+  });
+});
+
 // API Routes (with rate limiting on news route)
 app.use('/api/auth', authRoutes);
 app.use('/api/news', newsLimiter, newsRoutes);
