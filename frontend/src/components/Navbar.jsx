@@ -392,104 +392,6 @@ export default function Navbar({
                 <span>{isDarkMode ? 'Day' : 'Night'}</span>
               </button>
 
-              {/* Notification Bell Button & Popover */}
-              <div style={{ position: 'relative' }} ref={notifRef}>
-                <button
-                  onClick={() => {
-                    setNotifOpen(!notifOpen);
-                    if (!notifOpen && unreadCount > 0) markAllAsRead();
-                  }}
-                  className="btn"
-                  style={{
-                    ...styles.bookmarkBtn,
-                    position: 'relative',
-                    border: '1px solid var(--border-light)',
-                  }}
-                  title="Notifications"
-                >
-                  <Bell size={16} color={unreadCount > 0 ? 'var(--accent-primary)' : 'var(--text-secondary)'} />
-                  {unreadCount > 0 && (
-                    <span style={{
-                      position: 'absolute',
-                      top: '-4px',
-                      right: '-4px',
-                      backgroundColor: '#ef4444',
-                      color: '#fff',
-                      fontSize: '0.68rem',
-                      fontWeight: '700',
-                      borderRadius: '50%',
-                      width: '16px',
-                      height: '16px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 2px 4px rgba(239,68,68,0.4)'
-                    }}>
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
-                </button>
-
-                {notifOpen && (
-                  <div style={{ ...styles.dropdownMenu, width: '280px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <Bell size={15} color="var(--accent-primary)" />
-                        <span style={{ fontWeight: '700', fontSize: '0.88rem' }}>Notifications</span>
-                      </div>
-                      {notifications.length > 0 && (
-                        <button
-                          onClick={clearAllNotifications}
-                          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.75rem', cursor: 'pointer' }}
-                        >
-                          Clear
-                        </button>
-                      )}
-                    </div>
-                    <div style={styles.dropdownDivider} />
-
-                    <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                      {notifications.length === 0 ? (
-                        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
-                          <Bell size={24} style={{ opacity: 0.4, marginBottom: '6px' }} />
-                          <p style={{ margin: 0, fontWeight: '600' }}>No notifications yet</p>
-                          <p style={{ fontSize: '0.75rem', marginTop: '4px' }}>Follow channels to get live alerts!</p>
-                        </div>
-                      ) : (
-                        notifications.map((n) => (
-                          <div
-                            key={n.id}
-                            onClick={() => {
-                              if (n.source_name && onSelectChannel) {
-                                setNotifOpen(false);
-                                onSelectChannel(n.source_name);
-                              }
-                            }}
-                            style={{
-                              padding: '10px 12px',
-                              borderBottom: '1px solid var(--border-light)',
-                              backgroundColor: n.is_read ? 'transparent' : 'rgba(59, 130, 246, 0.05)',
-                              fontSize: '0.82rem',
-                              cursor: n.source_name ? 'pointer' : 'default',
-                            }}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
-                              <span style={{ fontWeight: '700', color: 'var(--accent-primary)', fontSize: '0.78rem' }}>
-                                {n.title}
-                              </span>
-                              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                                {n.created_at ? new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                              </span>
-                            </div>
-                            <p style={{ margin: 0, color: 'var(--text-primary)', lineHeight: 1.3 }}>{n.message}</p>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
               {/* Profile Dropdown */}
               <div style={{ position: 'relative' }} ref={dropdownRef}>
                 <div
@@ -820,11 +722,126 @@ export default function Navbar({
           <span>{toast.msg}</span>
         </div>
       )}
+
+      {/* Global Notification Popover / Overlay (Works on Desktop and Mobile) */}
+      {notifOpen && (
+        <div className="notif-modal-overlay" style={styles.notifOverlay} onClick={() => setNotifOpen(false)}>
+          <div
+            className="notif-modal-card"
+            style={styles.notifCard}
+            onClick={(e) => e.stopPropagation()}
+            ref={notifRef}
+          >
+            <div style={styles.notifHeader}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Bell size={16} color="var(--accent-primary)" />
+                <span style={{ fontWeight: '700', fontSize: '0.92rem' }}>Notifications</span>
+                {unreadCount > 0 && (
+                  <span style={{
+                    backgroundColor: '#ef4444',
+                    color: '#fff',
+                    fontSize: '0.7rem',
+                    fontWeight: '700',
+                    borderRadius: '12px',
+                    padding: '2px 8px'
+                  }}>
+                    {unreadCount}
+                  </span>
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                {notifications.length > 0 && (
+                  <button
+                    onClick={clearAllNotifications}
+                    style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '0.78rem', fontWeight: '700', cursor: 'pointer' }}
+                  >
+                    Clear All
+                  </button>
+                )}
+                <button
+                  onClick={() => setNotifOpen(false)}
+                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px' }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+            <div style={styles.dropdownDivider} />
+
+            <div style={{ maxHeight: '350px', overflowY: 'auto' }}>
+              {notifications.length === 0 ? (
+                <div style={{ padding: '30px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <Bell size={28} style={{ opacity: 0.4, marginBottom: '8px' }} />
+                  <p style={{ margin: 0, fontWeight: '700', fontSize: '0.9rem' }}>No notifications yet</p>
+                  <p style={{ fontSize: '0.78rem', marginTop: '4px' }}>Follow channels or favorite categories for live alerts!</p>
+                </div>
+              ) : (
+                notifications.map((n) => (
+                  <div
+                    key={n.id || Math.random()}
+                    onClick={() => {
+                      setNotifOpen(false);
+                      if (n.source_name && onSelectChannel) {
+                        onSelectChannel(n.source_name);
+                      }
+                    }}
+                    style={{
+                      padding: '12px 14px',
+                      borderBottom: '1px solid var(--border-light)',
+                      backgroundColor: n.is_read ? 'transparent' : 'rgba(59, 130, 246, 0.05)',
+                      fontSize: '0.84rem',
+                      cursor: n.source_name ? 'pointer' : 'default',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                      <span style={{ fontWeight: '700', color: 'var(--accent-primary)', fontSize: '0.8rem' }}>
+                        {n.title}
+                      </span>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                        {n.created_at ? new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                      </span>
+                    </div>
+                    <p style={{ margin: 0, color: 'var(--text-primary)', lineHeight: 1.35, fontWeight: '500' }}>{n.message}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
 
 const styles = {
+  notifOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    zIndex: 10000,
+    display: 'flex',
+    alignItems: 'flex-start',
+    justifyContent: 'flex-end',
+    padding: '70px 20px 20px 20px',
+  },
+  notifCard: {
+    width: '340px',
+    maxWidth: 'calc(100vw - 32px)',
+    backgroundColor: 'var(--bg-card)',
+    borderRadius: '16px',
+    border: '1px solid var(--border-light)',
+    boxShadow: '0 12px 36px rgba(0,0,0,0.25)',
+    overflow: 'hidden',
+  },
+  notifHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '14px 16px',
+  },
   header: {
     position: 'sticky',
     top: 0,
