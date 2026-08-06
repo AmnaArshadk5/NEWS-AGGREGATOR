@@ -21,7 +21,8 @@ export default function Navbar({
   openAdminPanel,
   openChangePasswordModal,
   onGoHome,
-  onSelectChannel
+  onSelectChannel,
+  onOpenProfile
 }) {
   const { user, logout, bookmarks } = useAuth();
   const { notifications, unreadCount, markAllAsRead, clearAllNotifications, followedChannels } = useNotifications();
@@ -463,6 +464,14 @@ export default function Navbar({
                     </div>
                     <div style={styles.dropdownDivider} />
 
+                    <button
+                      onClick={() => { setDropdownOpen(false); if (onOpenProfile) onOpenProfile(); }}
+                      style={styles.dropdownItem}
+                    >
+                      <User size={15} color="var(--accent-primary)" />
+                      <span>My Profile & Following</span>
+                    </button>
+
                     {user.role === 'admin' && (
                       <button
                         onClick={() => { setDropdownOpen(false); openAdminPanel(); }}
@@ -532,6 +541,15 @@ export default function Navbar({
                   <span className="mobile-user-role">{user.role ? user.role.toUpperCase() : 'USER'}</span>
                 </div>
               </div>
+
+              {/* My Profile & Following */}
+              <button
+                onClick={() => { setMobileMenuOpen(false); if (onOpenProfile) onOpenProfile(); }}
+                className="mobile-menu-btn"
+              >
+                <User size={18} color="var(--accent-primary)" />
+                <span>My Profile & Following</span>
+              </button>
 
               {/* Progress Shelf */}
               <button

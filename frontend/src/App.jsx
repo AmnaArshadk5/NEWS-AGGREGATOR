@@ -104,6 +104,7 @@ const COUNTRY_OPTIONS = [
 
 import PushNotificationBanner from './components/PushNotificationBanner';
 import ChannelPage from './components/ChannelPage';
+import UserProfilePage from './components/UserProfilePage';
 
 export default function App() {
   const { user, bookmarks, isLoadingBookmarks, sessionNotice, setSessionNotice } = useAuth();
@@ -111,10 +112,11 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Dynamic Categories from Backend API
+  // Dynamic Categories & View States
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedChannel, setSelectedChannel] = useState(null);
+  const [showProfileOnly, setShowProfileOnly] = useState(false);
 
   // Per-user 5-min client-side cache
   const newsCache = useRef({});
@@ -265,9 +267,17 @@ const fetchNews = useCallback(async (forceRefresh = false) => {
     fetchNews();
   }, [selectedCategory, searchQuery, showBookmarksOnly, sortBy, year, timeframe, selectedCountry, fetchNews]);
 
+  const toggleProfileView = () => {
+    setShowBookmarksOnly(false);
+    setShowProgressOnly(false);
+    setSelectedChannel(null);
+    setShowProfileOnly(!showProfileOnly);
+  };
+
   const handleSelectChannel = (channelName) => {
     setShowProgressOnly(false);
     setShowBookmarksOnly(false);
+    setShowProfileOnly(false);
     setSelectedCategory('');
     setSelectedChannel(channelName);
   };
@@ -275,6 +285,7 @@ const fetchNews = useCallback(async (forceRefresh = false) => {
   const handleCategorySelect = (categorySlug) => {
     setShowProgressOnly(false);
     setShowBookmarksOnly(false);
+    setShowProfileOnly(false);
     setSelectedChannel(null);
     setSelectedCategory(categorySlug);
   };
@@ -282,18 +293,21 @@ const fetchNews = useCallback(async (forceRefresh = false) => {
   const handleSearch = (query) => {
     setShowProgressOnly(false);
     setShowBookmarksOnly(false);
+    setShowProfileOnly(false);
     setSelectedChannel(null);
     setSearchQuery(query);
   };
 
   const toggleBookmarksView = () => {
     setShowProgressOnly(false);
+    setShowProfileOnly(false);
     setSelectedChannel(null);
     setShowBookmarksOnly(!showBookmarksOnly);
   };
 
   const toggleProgressView = () => {
     setShowBookmarksOnly(false);
+    setShowProfileOnly(false);
     setSelectedChannel(null);
     setShowProgressOnly(!showProgressOnly);
   };
@@ -395,6 +409,7 @@ const fetchNews = useCallback(async (forceRefresh = false) => {
   const resetHome = () => {
     setShowBookmarksOnly(false);
     setShowProgressOnly(false);
+    setShowProfileOnly(false);
     setSelectedChannel(null);
     setSearchQuery('');
     if (categories.length > 0) {
@@ -416,6 +431,7 @@ const fetchNews = useCallback(async (forceRefresh = false) => {
         openChangePasswordModal={() => setIsChangePasswordOpen(true)}
         onGoHome={resetHome}
         onSelectChannel={handleSelectChannel}
+        onOpenProfile={toggleProfileView}
       />
       <PushNotificationBanner />
 
@@ -427,6 +443,13 @@ const fetchNews = useCallback(async (forceRefresh = false) => {
             onGoBack={() => setSelectedChannel(null)}
             onRequireAuth={() => setIsAuthModalOpen(true)}
             onSelectChannel={handleSelectChannel}
+          />
+        ) : showProfileOnly ? (
+          <UserProfilePage
+            onGoHome={resetHome}
+            onOpenChangePassword={() => setIsChangePasswordOpen(true)}
+            onSelectChannel={handleSelectChannel}
+            progressCount={getInProgressCount()}
           />
         ) : showProgressOnly ? (
           <ReadingProgressPage onGoHome={resetHome} />
