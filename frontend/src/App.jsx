@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from './context/AuthContext';
+import { useNotifications } from './context/NotificationContext';
 import { API_BASE_URL } from './config';
 import Navbar from './components/Navbar';
 import NewsCard from './components/NewsCard';
@@ -109,6 +110,7 @@ import Pagination from './components/Pagination';
 
 export default function App() {
   const { user, bookmarks, isLoadingBookmarks, sessionNotice, setSessionNotice } = useAuth();
+  const { processLiveArticleNotifications } = useNotifications();
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -257,6 +259,9 @@ const fetchNews = useCallback(async (forceRefresh = false) => {
     // Store in per-user cache
     newsCache.current[cacheKey] = { data, timestamp: Date.now(), userId: user?.id ?? 'guest' };
     setArticles(data);
+    if (processLiveArticleNotifications) {
+      processLiveArticleNotifications(data);
+    }
     setCacheStatus({ fromCache: false, expiresAt: Date.now() + CACHE_TTL_MS });
   } catch (err) {
     console.error(err);

@@ -211,6 +211,88 @@ export const NotificationProvider = ({ children }) => {
     return favoriteCategories.some(c => c.toLowerCase() === catName.toLowerCase());
   };
 
+  // Process incoming articles and generate live alerts for followed channels & favorite categories
+  const processLiveArticleNotifications = useCallback((incomingArticles = []) => {
+    if (!Array.isArray(incomingArticles) || incomingArticles.length === 0) return;
+
+    let notifiedUrls = new Set();
+    try {
+      const savedNotified = localStorage.getItem(`notified_urls_${userId}`);
+      if (savedNotified) notifiedUrls = new Set(JSON.parse(savedNotified));
+    } catch (e) {
+      console.error('Error reading notified URLs:', e);
+    }
+
+    const newAlerts = [];
+    const lowerChannels = followedChannels.map(c => (c || '').toLowerCase());
+    const lowerCategories = favoriteCategories.map(c => (c || '').toLowerCase());
+
+    incomingArticles.slice(0, 40).forEach(art => {
+      const url = art.url || art.link;
+      if (!url || notifiedUrls.has(url)) return;
+
+      const sourceName = art.source?.name || art.source_name || '';
+      const categoryName = art.category || '';
+      const title = art.title || 'Breaking Story';
+
+      let matchedReason = null;
+      let matchedSource = sourceName;
+
+      // 1. Check if source matches followed channels
+      if (sourceName && lowerChannels.some(ch => sourceName.toLowerCase().includes(ch) || ch.includes(sourceName.toLowerCase()))) {
+        matchedReason = `Channel Alert: ${sourceName}`;
+      }
+      // 2. Check if article matches favorite categories
+      else if (lowerCategories.length > 0) {
+        const titleLower = title.toLowerCase();
+        const descLower = (art.description || '').toLowerCase();
+
+        for (const cat of lowerCategories) {
+          if (categoryName.toLowerCase().includes(cat) || titleLower.includes(cat) || descLower.includes(cat)) {
+            matchedReason = `Category Alert: ${cat.charAt(0).toUpperCase() + cat.slice(1)}`;
+            break;
+          }
+        }
+      }
+
+      if (matchedReason) {
+        notifiedUrls.add(url);
+        newAlerts.push({
+          id: Date.now() + Math.random(),
+          title: matchedReason,
+          message: title,
+          source_name: matchedSource,
+          article_url: url,
+          is_read: false,
+          created_at: new Date().toISOString()
+        });
+
+        // Trigger native browser push notification if permitted
+        if ('Notification' in window && Notification.permission === 'granted') {
+          try {
+            new Notification(matchedReason, {
+              body: title,
+              icon: '/favicon.ico'
+            });
+          } catch {
+            // Ignore push errors
+          }
+        }
+      }
+    });
+
+    if (newAlerts.length > 0) {
+      try {
+        localStorage.setItem(`notified_urls_${userId}`, JSON.stringify(Array.from(notifiedUrls)));
+      } catch (e) {
+        console.error('Error saving notified URLs:', e);
+      }
+
+      setNotifications(prev => [...newAlerts, ...prev]);
+      setUnreadCount(prev => prev + newAlerts.length);
+    }
+  }, [followedChannels, favoriteCategories, userId]);
+
   return (
     <NotificationContext.Provider value={{
       followedChannels,
@@ -221,6 +303,7 @@ export const NotificationProvider = ({ children }) => {
       isChannelFollowed,
       toggleFavoriteCategory,
       isCategoryFavorite,
+      processLiveArticleNotifications,
       markAllAsRead,
       clearAllNotifications,
       registerPushToken,
