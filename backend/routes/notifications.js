@@ -70,4 +70,23 @@ router.delete('/', async (req, res) => {
   }
 });
 
+// POST /api/notifications/register-token - Register FCM push token for logged-in user
+router.post('/register-token', async (req, res) => {
+  const { fcmToken, deviceType } = req.body;
+  if (!fcmToken) {
+    return res.status(400).json({ error: 'fcmToken is required' });
+  }
+
+  try {
+    await runQuery(
+      'INSERT INTO user_push_tokens (user_id, fcm_token, device_type) VALUES (?, ?, ?) ON CONFLICT (fcm_token) DO NOTHING',
+      [req.user.id, fcmToken, deviceType || 'web']
+    );
+    res.json({ message: 'Push notification token registered successfully' });
+  } catch (err) {
+    console.error('Error registering FCM token:', err);
+    res.status(500).json({ error: 'Failed to register push token' });
+  }
+});
+
 export default router;

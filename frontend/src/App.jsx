@@ -102,6 +102,8 @@ const COUNTRY_OPTIONS = [
   { value: 've', label: '🇻🇪 Venezuela' },
 ];
 
+import PushNotificationBanner from './components/PushNotificationBanner';
+
 export default function App() {
   const { user, bookmarks, isLoadingBookmarks, sessionNotice, setSessionNotice } = useAuth();
   const [articles, setArticles] = useState([]);
@@ -400,6 +402,7 @@ const fetchNews = useCallback(async (forceRefresh = false) => {
         openChangePasswordModal={() => setIsChangePasswordOpen(true)}
         onGoHome={resetHome}
       />
+      <PushNotificationBanner />
 
       <main style={styles.main}>
         {showProgressOnly ? (

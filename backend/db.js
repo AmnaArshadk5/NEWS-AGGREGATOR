@@ -152,7 +152,17 @@ async function initializePgTables() {
       )
     `);
 
-    console.log('[Database] PostgreSQL tables initialized with default categories, follows & notifications.');
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS user_push_tokens (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        fcm_token TEXT UNIQUE NOT NULL,
+        device_type VARCHAR(50) DEFAULT 'web',
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    console.log('[Database] PostgreSQL tables initialized with default categories, follows, notifications & push tokens.');
   } catch (err) {
     console.error('[Database] Error initializing PostgreSQL tables:', err.message);
   }
@@ -221,6 +231,17 @@ function initializeSqliteTables() {
         source_name TEXT,
         is_read INTEGER DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    sqliteDb.run(`
+      CREATE TABLE IF NOT EXISTS user_push_tokens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        fcm_token TEXT UNIQUE NOT NULL,
+        device_type TEXT DEFAULT 'web',
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
       )
     `);

@@ -136,6 +136,23 @@ export const NotificationProvider = ({ children }) => {
     }
   };
 
+  // Register Web Push token to backend
+  const registerPushToken = async (fcmToken) => {
+    if (!token || !fcmToken) return;
+    try {
+      await fetch(`${API_BASE_URL}/notifications/register-token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ fcmToken, deviceType: 'web' })
+      });
+    } catch (err) {
+      console.error('Error registering push token:', err);
+    }
+  };
+
   return (
     <NotificationContext.Provider value={{
       followedChannels,
@@ -145,6 +162,7 @@ export const NotificationProvider = ({ children }) => {
       isChannelFollowed,
       markAllAsRead,
       clearAllNotifications,
+      registerPushToken,
       fetchNotifications
     }}>
       {children}
