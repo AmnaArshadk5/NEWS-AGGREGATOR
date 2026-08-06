@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 import {
   Search, LogOut, Bookmark, User, Shield, KeyRound,
-  ChevronDown, History, TrendingUp, Trash2, X, Clock, CheckCheck, BookOpen, Sun, Moon, Menu
+  ChevronDown, History, TrendingUp, Trash2, X, Clock, CheckCheck, BookOpen, Sun, Moon, Menu, Bell, Rss
 } from 'lucide-react';
 
 const TRENDING_TOPICS = [
@@ -22,10 +23,23 @@ export default function Navbar({
   onGoHome
 }) {
   const { user, logout, bookmarks } = useAuth();
+  const { notifications, unreadCount, markAllAsRead, clearAllNotifications, followedChannels } = useNotifications();
   const [searchVal, setSearchVal] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const notifRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutsideNotif = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotifOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutsideNotif);
+    return () => document.removeEventListener('mousedown', handleClickOutsideNotif);
+  }, []);
 
   // Night Mode / Dark Theme state
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -328,6 +342,97 @@ export default function Navbar({
                 {isDarkMode ? <Sun size={15} color="#fbbf24" /> : <Moon size={15} color="var(--text-secondary)" />}
                 <span>{isDarkMode ? 'Day' : 'Night'}</span>
               </button>
+
+              {/* Notification Bell Button & Popover */}
+              <div style={{ position: 'relative' }} ref={notifRef}>
+                <button
+                  onClick={() => {
+                    setNotifOpen(!notifOpen);
+                    if (!notifOpen && unreadCount > 0) markAllAsRead();
+                  }}
+                  className="btn"
+                  style={{
+                    ...styles.bookmarkBtn,
+                    position: 'relative',
+                    border: '1px solid var(--border-light)',
+                  }}
+                  title="Notifications"
+                >
+                  <Bell size={16} color={unreadCount > 0 ? 'var(--accent-primary)' : 'var(--text-secondary)'} />
+                  {unreadCount > 0 && (
+                    <span style={{
+                      position: 'absolute',
+                      top: '-4px',
+                      right: '-4px',
+                      backgroundColor: '#ef4444',
+                      color: '#fff',
+                      fontSize: '0.68rem',
+                      fontWeight: '700',
+                      borderRadius: '50%',
+                      width: '16px',
+                      height: '16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 2px 4px rgba(239,68,68,0.4)'
+                    }}>
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {notifOpen && (
+                  <div style={{ ...styles.dropdownMenu, width: '280px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Bell size={15} color="var(--accent-primary)" />
+                        <span style={{ fontWeight: '700', fontSize: '0.88rem' }}>Notifications</span>
+                      </div>
+                      {notifications.length > 0 && (
+                        <button
+                          onClick={clearAllNotifications}
+                          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.75rem', cursor: 'pointer' }}
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <div style={styles.dropdownDivider} />
+
+                    <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                      {notifications.length === 0 ? (
+                        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+                          <Bell size={24} style={{ opacity: 0.4, marginBottom: '6px' }} />
+                          <p style={{ margin: 0, fontWeight: '600' }}>No notifications yet</p>
+                          <p style={{ fontSize: '0.75rem', marginTop: '4px' }}>Follow channels to get live alerts!</p>
+                        </div>
+                      ) : (
+                        notifications.map((n) => (
+                          <div
+                            key={n.id}
+                            style={{
+                              padding: '10px 12px',
+                              borderBottom: '1px solid var(--border-light)',
+                              backgroundColor: n.is_read ? 'transparent' : 'rgba(59, 130, 246, 0.05)',
+                              fontSize: '0.82rem',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
+                              <span style={{ fontWeight: '700', color: 'var(--accent-primary)', fontSize: '0.78rem' }}>
+                                {n.title}
+                              </span>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                                {n.created_at ? new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                              </span>
+                            </div>
+                            <p style={{ margin: 0, color: 'var(--text-primary)', lineHeight: 1.3 }}>{n.message}</p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Profile Dropdown */}
               <div style={{ position: 'relative' }} ref={dropdownRef}>

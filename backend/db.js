@@ -129,7 +129,30 @@ async function initializePgTables() {
       );
     }
 
-    console.log('[Database] PostgreSQL tables initialized with default categories.');
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS channel_follows (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        source_name VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, source_name)
+      )
+    `);
+
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS notifications (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        title VARCHAR(255) NOT NULL,
+        message TEXT NOT NULL,
+        url TEXT,
+        source_name VARCHAR(255),
+        is_read INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    console.log('[Database] PostgreSQL tables initialized with default categories, follows & notifications.');
   } catch (err) {
     console.error('[Database] Error initializing PostgreSQL tables:', err.message);
   }
@@ -174,6 +197,31 @@ function initializeSqliteTables() {
         enabled INTEGER DEFAULT 1,
         sort_order INTEGER DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    sqliteDb.run(`
+      CREATE TABLE IF NOT EXISTS channel_follows (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        source_name TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+        UNIQUE(user_id, source_name)
+      )
+    `);
+
+    sqliteDb.run(`
+      CREATE TABLE IF NOT EXISTS notifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        message TEXT NOT NULL,
+        url TEXT,
+        source_name TEXT,
+        is_read INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
       )
     `);
   });

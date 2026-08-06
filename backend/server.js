@@ -15,6 +15,8 @@ import adminRoutes from './routes/admin.js';
 import categoriesRoutes from './routes/categories.js';
 import imageProxyRoutes from './routes/imageProxy.js';
 import readerRoutes from './routes/reader.js';
+import channelsRoutes from './routes/channels.js';
+import notificationsRoutes from './routes/notifications.js';
 
 // Import Swagger UI & OpenAPI Specification
 import swaggerUi from 'swagger-ui-express';
@@ -70,6 +72,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/categories', categoriesRoutes);
 app.use('/api/proxy', imageProxyRoutes);
 app.use('/api/reader', readerRoutes);
+app.use('/api/channels', channelsRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 // Interactive Swagger API Documentation Endpoint
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));

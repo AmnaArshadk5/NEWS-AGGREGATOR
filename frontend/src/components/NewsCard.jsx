@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 import { API_BASE_URL } from '../config';
-import { Bookmark, Clock, User, BookOpen, CheckCircle2 } from 'lucide-react';
+import { Bookmark, Clock, User, BookOpen, CheckCircle2, Plus, Check } from 'lucide-react';
 import ArticleModal from './ArticleModal';
 
 // NewsCard component with reading progress tracking
 export default function NewsCard({ article = {}, onRequireAuth }) {
   const { user, toggleBookmark, isBookmarked } = useAuth();
+  const { toggleFollowChannel, isChannelFollowed } = useNotifications();
   const userId = user?.id ? user.id : 'guest';
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -19,6 +21,17 @@ export default function NewsCard({ article = {}, onRequireAuth }) {
   const author = article?.author;
 
   const [progress, setProgress] = useState(0);
+  const followed = isChannelFollowed(sourceName);
+
+  const handleFollowClick = async (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!user) {
+      onRequireAuth();
+      return;
+    }
+    await toggleFollowChannel(sourceName);
+  };
 
   useEffect(() => {
     if (url) {
@@ -126,7 +139,30 @@ export default function NewsCard({ article = {}, onRequireAuth }) {
         <div style={styles.content}>
           {/* Source + Date row */}
           <div style={styles.metaRow}>
-            <span className="badge badge-accent">{sourceName}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span className="badge badge-accent">{sourceName}</span>
+              <button
+                onClick={handleFollowClick}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  border: followed ? '1px solid var(--accent-primary)' : '1px solid var(--border-light)',
+                  backgroundColor: followed ? 'rgba(59, 130, 246, 0.12)' : 'var(--bg-input)',
+                  color: followed ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                  fontSize: '0.7rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+                title={followed ? `Unfollow ${sourceName}` : `Follow ${sourceName}`}
+              >
+                {followed ? <Check size={11} color="var(--accent-primary)" /> : <Plus size={11} />}
+                <span>{followed ? 'Following' : 'Follow'}</span>
+              </button>
+            </div>
             <div style={styles.timeRow}>
               <Clock size={12} style={{ color: 'var(--text-muted)' }} />
               <span style={styles.timeText}>{getTimeAgo(publishedAt)}</span>
