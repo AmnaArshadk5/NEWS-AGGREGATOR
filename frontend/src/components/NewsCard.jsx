@@ -89,6 +89,9 @@ export default function NewsCard({ article = {}, onRequireAuth }) {
   const PROXY_BASE = `${API_BASE_URL}/proxy/image?url=`;
   const getProxiedImage = (src) => {
     if (!src) return FALLBACK_IMAGE;
+    if (src.includes('localhost:5000/api')) {
+      src = src.replace('http://localhost:5000/api', API_BASE_URL);
+    }
     if (src.includes('/api/proxy/image') || src.startsWith('data:')) return src;
     return `${PROXY_BASE}${encodeURIComponent(src)}`;
   };

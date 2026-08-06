@@ -231,7 +231,13 @@ export default function ArticleModal({ article, isOpen, onClose, onProgressUpdat
               {urlToImage && (
                 <div style={styles.imageWrap}>
                   <img
-                    src={urlToImage.includes('/api/proxy/image') || urlToImage.startsWith('data:') ? urlToImage : `${API_BASE}/proxy/image?url=${encodeURIComponent(urlToImage)}`}
+                    src={(() => {
+                      let src = urlToImage;
+                      if (src.includes('localhost:5000/api')) {
+                        src = src.replace('http://localhost:5000/api', API_BASE);
+                      }
+                      return src.includes('/api/proxy/image') || src.startsWith('data:') ? src : `${API_BASE}/proxy/image?url=${encodeURIComponent(src)}`;
+                    })()}
                     alt={title}
                     style={styles.image}
                     referrerPolicy="no-referrer"
