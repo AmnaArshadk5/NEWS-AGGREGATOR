@@ -183,14 +183,61 @@ export default function Navbar({
             <span style={styles.brandAccent}>Wire</span>
           </div>
 
-          {/* Mobile Hamburger Toggle Button */}
-          <button
-            className="mobile-hamburger-btn"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle Navigation Menu"
-          >
-            {mobileMenuOpen ? <X size={22} color="var(--text-primary)" /> : <Menu size={22} color="var(--text-primary)" />}
-          </button>
+          {/* Mobile Actions: Notification Bell + Hamburger Button */}
+          <div className="mobile-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {user && (
+              <button
+                type="button"
+                onClick={() => {
+                  setNotifOpen(!notifOpen);
+                  if (!notifOpen && unreadCount > 0) markAllAsRead();
+                }}
+                className="mobile-notif-bell-btn"
+                style={{
+                  background: 'var(--bg-input)',
+                  border: '1px solid var(--border-light)',
+                  borderRadius: '10px',
+                  padding: '7px 10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  position: 'relative'
+                }}
+                title="Notifications"
+              >
+                <Bell size={18} color={unreadCount > 0 ? 'var(--accent-primary)' : 'var(--text-primary)'} />
+                {unreadCount > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '-3px',
+                    right: '-3px',
+                    backgroundColor: '#ef4444',
+                    color: '#fff',
+                    fontSize: '0.65rem',
+                    fontWeight: '800',
+                    borderRadius: '50%',
+                    width: '16px',
+                    height: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 4px rgba(239,68,68,0.4)'
+                  }}>
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+            )}
+
+            <button
+              className="mobile-hamburger-btn"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle Navigation Menu"
+            >
+              {mobileMenuOpen ? <X size={22} color="var(--text-primary)" /> : <Menu size={22} color="var(--text-primary)" />}
+            </button>
+          </div>
         </div>
 
         {/* Search */}
@@ -549,6 +596,24 @@ export default function Navbar({
               >
                 <User size={18} color="var(--accent-primary)" />
                 <span>My Profile & Following</span>
+              </button>
+
+              {/* Notifications Item */}
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setNotifOpen(true);
+                  if (unreadCount > 0) markAllAsRead();
+                }}
+                className="mobile-menu-btn"
+              >
+                <Bell size={18} color={unreadCount > 0 ? 'var(--accent-primary)' : 'var(--text-primary)'} />
+                <span>Notifications</span>
+                {unreadCount > 0 && (
+                  <span className="mobile-badge" style={{ backgroundColor: '#ef4444', color: '#fff' }}>
+                    {unreadCount}
+                  </span>
+                )}
               </button>
 
               {/* Progress Shelf */}
