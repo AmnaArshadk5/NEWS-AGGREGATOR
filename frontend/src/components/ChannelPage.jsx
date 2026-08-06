@@ -3,6 +3,7 @@ import { useNotifications } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL } from '../config';
 import NewsCard from './NewsCard';
+import Pagination from './Pagination';
 import { ArrowLeft, Rss, Check, Plus, Search, Newspaper, Sparkles, Loader2 } from 'lucide-react';
 
 export default function ChannelPage({
@@ -16,8 +17,14 @@ export default function ChannelPage({
   const { toggleFollowChannel, isChannelFollowed } = useNotifications();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('newest');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(12);
   const [remoteArticles, setRemoteArticles] = useState([]);
   const [fetchingRemote, setFetchingRemote] = useState(false);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [channelName, searchQuery, sortBy]);
 
   const followed = isChannelFollowed(channelName);
 
@@ -191,18 +198,41 @@ export default function ChannelPage({
             Return to Feed
           </button>
         </div>
-      ) : (
-        <div style={styles.grid}>
-          {filteredArticles.map((art, idx) => (
-            <NewsCard
-              key={art.url || idx}
-              article={art}
-              onRequireAuth={onRequireAuth}
-              onSelectChannel={onSelectChannel}
+      ) : (() => {
+        const totalCount = filteredArticles.length;
+        const totalPagesCount = Math.max(1, Math.ceil(totalCount / pageSize));
+        const paginated = filteredArticles.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+        return (
+          <>
+            <div style={styles.grid}>
+              {paginated.map((art, idx) => (
+                <NewsCard
+                  key={art.url || idx}
+                  article={art}
+                  onRequireAuth={onRequireAuth}
+                  onSelectChannel={onSelectChannel}
+                />
+              ))}
+            </div>
+
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPagesCount}
+              totalArticles={totalCount}
+              pageSize={pageSize}
+              onPageChange={(page) => {
+                setCurrentPage(page);
+                window.scrollTo({ top: 200, behavior: 'smooth' });
+              }}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setCurrentPage(1);
+              }}
             />
-          ))}
-        </div>
-      )}
+          </>
+        );
+      })()}
     </div>
   );
 }

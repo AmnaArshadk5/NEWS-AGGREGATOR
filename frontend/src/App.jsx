@@ -105,6 +105,7 @@ const COUNTRY_OPTIONS = [
 import PushNotificationBanner from './components/PushNotificationBanner';
 import ChannelPage from './components/ChannelPage';
 import UserProfilePage from './components/UserProfilePage';
+import Pagination from './components/Pagination';
 
 export default function App() {
   const { user, bookmarks, isLoadingBookmarks, sessionNotice, setSessionNotice } = useAuth();
@@ -112,11 +113,13 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Dynamic Categories & View States
+  // Dynamic Categories, View & Pagination States
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedChannel, setSelectedChannel] = useState(null);
   const [showProfileOnly, setShowProfileOnly] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(12);
 
   // Per-user 5-min client-side cache
   const newsCache = useRef({});
@@ -267,11 +270,17 @@ const fetchNews = useCallback(async (forceRefresh = false) => {
     fetchNews();
   }, [selectedCategory, searchQuery, showBookmarksOnly, sortBy, year, timeframe, selectedCountry, fetchNews]);
 
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 250, behavior: 'smooth' });
+  };
+
   const toggleProfileView = () => {
     setShowBookmarksOnly(false);
     setShowProgressOnly(false);
     setSelectedChannel(null);
     setShowProfileOnly(!showProfileOnly);
+    setCurrentPage(1);
   };
 
   const handleSelectChannel = (channelName) => {
@@ -280,6 +289,7 @@ const fetchNews = useCallback(async (forceRefresh = false) => {
     setShowProfileOnly(false);
     setSelectedCategory('');
     setSelectedChannel(channelName);
+    setCurrentPage(1);
   };
 
   const handleCategorySelect = (categorySlug) => {
@@ -288,6 +298,7 @@ const fetchNews = useCallback(async (forceRefresh = false) => {
     setShowProfileOnly(false);
     setSelectedChannel(null);
     setSelectedCategory(categorySlug);
+    setCurrentPage(1);
   };
 
   const handleSearch = (query) => {
@@ -296,6 +307,7 @@ const fetchNews = useCallback(async (forceRefresh = false) => {
     setShowProfileOnly(false);
     setSelectedChannel(null);
     setSearchQuery(query);
+    setCurrentPage(1);
   };
 
   const toggleBookmarksView = () => {
@@ -303,6 +315,7 @@ const fetchNews = useCallback(async (forceRefresh = false) => {
     setShowProfileOnly(false);
     setSelectedChannel(null);
     setShowBookmarksOnly(!showBookmarksOnly);
+    setCurrentPage(1);
   };
 
   const toggleProgressView = () => {
@@ -310,6 +323,7 @@ const fetchNews = useCallback(async (forceRefresh = false) => {
     setShowProfileOnly(false);
     setSelectedChannel(null);
     setShowProgressOnly(!showProgressOnly);
+    setCurrentPage(1);
   };
 
   const getDisplayArticles = () => {
@@ -412,6 +426,7 @@ const fetchNews = useCallback(async (forceRefresh = false) => {
     setShowProfileOnly(false);
     setSelectedChannel(null);
     setSearchQuery('');
+    setCurrentPage(1);
     if (categories.length > 0) {
       setSelectedCategory(categories[0].slug);
     } else {
@@ -639,19 +654,40 @@ const fetchNews = useCallback(async (forceRefresh = false) => {
             </div>
           )}
 
-          {/* Article Grid */}
-          {!loading && !error && displayArticles.length > 0 && (
-            <div style={styles.grid}>
-              {displayArticles.map((article, index) => (
-                <NewsCard
-                  key={article.url || index}
-                  article={article}
-                  onRequireAuth={() => setIsAuthModalOpen(true)}
-                  onSelectChannel={handleSelectChannel}
+          {/* Article Grid with Multi-Page Slicing */}
+          {!loading && !error && displayArticles.length > 0 && (() => {
+            const totalArticlesCount = displayArticles.length;
+            const totalPagesCount = Math.max(1, Math.ceil(totalArticlesCount / pageSize));
+            const paginatedArticles = displayArticles.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+            return (
+              <>
+                <div style={styles.grid}>
+                  {paginatedArticles.map((article, index) => (
+                    <NewsCard
+                      key={article.url || index}
+                      article={article}
+                      onRequireAuth={() => setIsAuthModalOpen(true)}
+                      onSelectChannel={handleSelectChannel}
+                    />
+                  ))}
+                </div>
+
+                {/* Multi-Page Pagination Control Bar */}
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPagesCount}
+                  totalArticles={totalArticlesCount}
+                  pageSize={pageSize}
+                  onPageChange={handlePageChange}
+                  onPageSizeChange={(newSize) => {
+                    setPageSize(newSize);
+                    setCurrentPage(1);
+                  }}
                 />
-              ))}
-            </div>
-          )}
+              </>
+            );
+          })()}
         </div>
         )}
       </main>
