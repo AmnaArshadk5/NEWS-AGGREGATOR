@@ -57,8 +57,8 @@ export const AuthProvider = ({ children }) => {
           setToken(null);
           setUser(null);
         }
-      } catch (err) {
-        console.warn('Could not verify auth token (network issue):', err.message);
+      } catch {
+        // Silent catch for token verification network failure
       } finally {
         setLoading(false);
       }
