@@ -183,81 +183,14 @@ export default function Navbar({
             <span style={styles.brandAccent}>Wire</span>
           </div>
 
-          {/* Right Side Actions: Hamburger + Night Mode Icon + Notification Bell (Just after Night Mode) */}
-          <div className="mobile-right-actions" style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
-            <button
-              className="mobile-hamburger-btn"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle Navigation Menu"
-            >
-              {mobileMenuOpen ? <X size={22} color="var(--text-primary)" /> : <Menu size={22} color="var(--text-primary)" />}
-            </button>
-
-            {/* Night Mode Icon */}
-            <button
-              type="button"
-              onClick={toggleTheme}
-              style={{
-                background: 'var(--bg-input)',
-                border: '1px solid var(--border-light)',
-                borderRadius: '10px',
-                padding: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer'
-              }}
-              title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Night Mode'}
-            >
-              {isDarkMode ? <Sun size={18} color="#fbbf24" /> : <Moon size={18} color="var(--text-primary)" />}
-            </button>
-
-            {/* Notification Bell Button JUST AFTER Night Mode Icon */}
-            {user && (
-              <button
-                type="button"
-                onClick={() => {
-                  setNotifOpen(!notifOpen);
-                  if (!notifOpen && unreadCount > 0) markAllAsRead();
-                }}
-                className="mobile-notif-bell-btn"
-                style={{
-                  background: 'var(--bg-input)',
-                  border: '1px solid var(--border-light)',
-                  borderRadius: '10px',
-                  padding: '8px 10px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  position: 'relative'
-                }}
-                title="Notifications"
-              >
-                <Bell size={18} color={unreadCount > 0 ? 'var(--accent-primary)' : 'var(--text-primary)'} />
-                {unreadCount > 0 && (
-                  <span style={{
-                    position: 'absolute',
-                    top: '-3px',
-                    right: '-3px',
-                    backgroundColor: '#ef4444',
-                    color: '#fff',
-                    fontSize: '0.65rem',
-                    fontWeight: '800',
-                    borderRadius: '50%',
-                    width: '16px',
-                    height: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 2px 4px rgba(239,68,68,0.4)'
-                  }}>
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-              </button>
-            )}
-          </div>
+          {/* Mobile Hamburger Toggle Button (Only displays on mobile screens) */}
+          <button
+            className="mobile-hamburger-btn"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle Navigation Menu"
+          >
+            {mobileMenuOpen ? <X size={22} color="var(--text-primary)" /> : <Menu size={22} color="var(--text-primary)" />}
+          </button>
         </div>
 
         {/* Search */}
