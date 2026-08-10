@@ -216,36 +216,28 @@ function getMockArticles(category, q) {
   const all = Object.values(mockNews).flat();
   let articles = [];
 
-  if (!category || category === 'all' || category === 'general') {
+  if (!category || category === 'all') {
     articles = [...all];
   } else if (mockNews[category]) {
-    // Start with category articles, and pad with all articles so there are at least 30+ articles
-    const catList = mockNews[category];
-    const rest = all.filter(a => !catList.some(c => c.url === a.url));
-    articles = [...catList, ...rest];
+    articles = [...mockNews[category]];
   } else {
     articles = all.filter(art =>
       art.title?.toLowerCase().includes(category) ||
       art.description?.toLowerCase().includes(category)
     );
-    if (articles.length < 15) {
-      articles = [...articles, ...all];
+    if (articles.length === 0) {
+      articles = [...(mockNews['general'] || [])];
     }
   }
 
   if (q) {
     const qLower = q.toLowerCase();
-    const matches = all.filter(art =>
+    articles = articles.filter(art =>
       art.title?.toLowerCase().includes(qLower) ||
       art.description?.toLowerCase().includes(qLower) ||
       art.source?.name?.toLowerCase().includes(qLower) ||
       art.author?.toLowerCase().includes(qLower)
     );
-    if (matches.length >= 5) {
-      articles = matches;
-    } else {
-      articles = [...matches, ...all];
-    }
   }
 
   // Deduplicate by title & url
@@ -286,11 +278,12 @@ router.get('/', async (req, res) => {
     catch (err) { console.error('[NewsData] Error:', err.message); }
   }
 
-  // 4) Fallback / Padding to guarantee 80-120+ articles per category for full pagination
+  // 4) Fallback to category mock articles if no API articles loaded
   const mockFallback = getMockArticles(category, q);
-  if (!articles || !Array.isArray(articles) || articles.length < 60) {
-    const existing = Array.isArray(articles) ? articles : [];
-    const combined = [...existing, ...mockFallback];
+  if (!articles || !Array.isArray(articles) || articles.length === 0) {
+    articles = mockFallback;
+  } else {
+    const combined = [...articles, ...mockFallback];
     articles = Array.from(new Map(combined.map(item => [item.title + (item.url || ''), item])).values());
   }
 
