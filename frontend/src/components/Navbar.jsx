@@ -394,6 +394,47 @@ export default function Navbar({
                 <span>{isDarkMode ? 'Day' : 'Night'}</span>
               </button>
 
+              {/* Notification Bell Button (Placed on right side after Night Mode) */}
+              <button
+                type="button"
+                onClick={() => {
+                  setNotifOpen(!notifOpen);
+                  if (!notifOpen && unreadCount > 0) markAllAsRead();
+                }}
+                className="btn"
+                style={{
+                  ...styles.bookmarkBtn,
+                  backgroundColor: notifOpen ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
+                  color: unreadCount > 0 ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                  border: '1px solid var(--border-light)',
+                  position: 'relative',
+                  padding: '8px 12px',
+                }}
+                title="Notifications"
+              >
+                <Bell size={16} color={unreadCount > 0 ? 'var(--accent-primary)' : 'var(--text-secondary)'} />
+                {unreadCount > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '-4px',
+                    right: '-4px',
+                    backgroundColor: '#ef4444',
+                    color: '#fff',
+                    fontSize: '0.65rem',
+                    fontWeight: '800',
+                    borderRadius: '50%',
+                    width: '16px',
+                    height: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 4px rgba(239,68,68,0.4)'
+                  }}>
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+
               {/* Profile Dropdown */}
               <div style={{ position: 'relative' }} ref={dropdownRef}>
                 <div
