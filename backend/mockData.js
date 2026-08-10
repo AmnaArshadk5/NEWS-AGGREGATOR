@@ -1,4 +1,4 @@
-export const mockNews = {
+const rawMockNews = {
   general: [
     {
       title: "Global Climate Summit Produces Historic 35-Nation Carbon Pact",
@@ -394,3 +394,25 @@ export const mockNews = {
     }
   ]
 };
+
+// Expand each category to 42+ articles to guarantee multi-page pagination for every category
+const expandCategory = (categoryKey, baseList) => {
+  const expanded = [...baseList];
+  if (!baseList || baseList.length === 0) return expanded;
+
+  for (let i = 1; i <= 5; i++) {
+    baseList.forEach((item, idx) => {
+      expanded.push({
+        ...item,
+        title: i === 1 ? `${item.title}: Deep Dive Report` : i === 2 ? `In Focus: ${item.title}` : i === 3 ? `Global Perspective: ${item.title}` : i === 4 ? `Expert Insight: ${item.title}` : `Latest Updates: ${item.title}`,
+        url: `${item.url}?edition=${i + 1}&id=${idx}`,
+        publishedAt: new Date(new Date(item.publishedAt || Date.now()).getTime() - (i * 24 + idx * 3) * 3600000).toISOString(),
+      });
+    });
+  }
+  return expanded;
+};
+
+export const mockNews = Object.fromEntries(
+  Object.entries(rawMockNews).map(([cat, list]) => [cat, expandCategory(cat, list)])
+);

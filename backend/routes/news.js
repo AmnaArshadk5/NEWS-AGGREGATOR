@@ -278,11 +278,11 @@ router.get('/', async (req, res) => {
     catch (err) { console.error('[NewsData] Error:', err.message); }
   }
 
-  // 4) Fallback to category mock articles if no API articles loaded
+  // 4) Fallback & Padding to guarantee 40+ articles per category for full multi-page pagination
   const mockFallback = getMockArticles(category, q);
   if (!articles || !Array.isArray(articles) || articles.length === 0) {
     articles = mockFallback;
-  } else {
+  } else if (articles.length < 40) {
     const combined = [...articles, ...mockFallback];
     articles = Array.from(new Map(combined.map(item => [item.title + (item.url || ''), item])).values());
   }
