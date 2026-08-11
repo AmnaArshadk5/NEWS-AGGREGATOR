@@ -214,6 +214,7 @@ export const NotificationProvider = ({ children }) => {
 
   // Process incoming articles and generate live alerts for followed channels & favorite categories
   const processLiveArticleNotifications = useCallback((incomingArticles = []) => {
+    if (!user || !token) return; // Do not process alerts if user is logged out
     if (!Array.isArray(incomingArticles) || incomingArticles.length === 0) return;
 
     let notifiedUrls = new Set();
@@ -293,10 +294,12 @@ export const NotificationProvider = ({ children }) => {
       setNotifications(prev => [...newAlerts, ...prev]);
       setUnreadCount(prev => prev + newAlerts.length);
     }
-  }, [followedChannels, favoriteCategories, userId]);
+  }, [user, token, followedChannels, favoriteCategories, userId]);
 
-  // Real-Time Background Polling Engine (polls every 10 seconds)
+  // Real-Time Background Polling Engine (polls every 10 seconds ONLY when user is logged in)
   useEffect(() => {
+    if (!user || !token) return;
+
     const pollInterval = setInterval(async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/news`);
@@ -312,7 +315,7 @@ export const NotificationProvider = ({ children }) => {
     }, 10000);
 
     return () => clearInterval(pollInterval);
-  }, [processLiveArticleNotifications]);
+  }, [user, token, processLiveArticleNotifications]);
 
   const dismissToast = () => setActiveToast(null);
 
