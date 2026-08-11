@@ -63,6 +63,7 @@ export const NotificationProvider = ({ children }) => {
       setFollowedChannels([]);
       setNotifications([]);
       setUnreadCount(0);
+      setActiveToast(null); // Instantly clear active on-screen toast on logout
     }
   }, [user, token, fetchFollowedChannels, fetchNotifications]);
 
