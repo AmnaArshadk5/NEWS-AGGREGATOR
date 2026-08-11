@@ -404,7 +404,7 @@ const expandCategory = (categoryKey, baseList) => {
     baseList.forEach((item, idx) => {
       expanded.push({
         ...item,
-        title: i === 1 ? `${item.title}: Deep Dive Report` : i === 2 ? `In Focus: ${item.title}` : i === 3 ? `Global Perspective: ${item.title}` : i === 4 ? `Expert Insight: ${item.title}` : `Latest Updates: ${item.title}`,
+        title: i === 1 ? `${item.title} - Deep Dive Report` : i === 2 ? `${item.title} - Special Briefing` : i === 3 ? `${item.title} - Global Perspective` : i === 4 ? `${item.title} - Expert Insight` : `${item.title} - Policy Impact`,
         url: `${item.url}?edition=${i + 1}&id=${idx}`,
         publishedAt: new Date(new Date(item.publishedAt || Date.now()).getTime() - (i * 24 + idx * 3) * 3600000).toISOString(),
       });

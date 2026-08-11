@@ -278,14 +278,23 @@ router.get('/', async (req, res) => {
     catch (err) { console.error('[NewsData] Error:', err.message); }
   }
 
-  // 4) Fallback & Padding to guarantee 40+ articles per category for full multi-page pagination
+  // 4) Fallback & Padding to guarantee articles per category
   const mockFallback = getMockArticles(category, q);
   if (!articles || !Array.isArray(articles) || articles.length === 0) {
     articles = mockFallback;
   } else if (articles.length < 40) {
-    const combined = [...articles, ...mockFallback];
-    articles = Array.from(new Map(combined.map(item => [item.title + (item.url || ''), item])).values());
+    articles = [...articles, ...mockFallback];
   }
+
+  // 5) Strict Deduplication by normalized base title to eliminate any repeating duplicate articles
+  const seenTitles = new Set();
+  articles = articles.filter(item => {
+    if (!item || !item.title || item.title === '[Removed]') return false;
+    const cleanTitle = item.title.split(':')[0].toLowerCase().replace(/[^a-z0-9]/g, '').trim();
+    if (!cleanTitle || seenTitles.has(cleanTitle)) return false;
+    seenTitles.add(cleanTitle);
+    return true;
+  });
 
   articles = filterByYear(articles, year);
   articles = filterByTimeframe(articles, timeframe);
