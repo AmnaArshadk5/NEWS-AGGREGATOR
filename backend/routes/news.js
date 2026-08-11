@@ -286,11 +286,11 @@ router.get('/', async (req, res) => {
     articles = [...articles, ...mockFallback];
   }
 
-  // 5) Strict Deduplication by normalized base title to eliminate any repeating duplicate articles
+  // 5) Strict Deduplication by normalized title to eliminate any repeating duplicate articles
   const seenTitles = new Set();
   articles = articles.filter(item => {
     if (!item || !item.title || item.title === '[Removed]') return false;
-    const cleanTitle = item.title.split(':')[0].toLowerCase().replace(/[^a-z0-9]/g, '').trim();
+    const cleanTitle = item.title.toLowerCase().replace(/[^a-z0-9]/g, '').trim();
     if (!cleanTitle || seenTitles.has(cleanTitle)) return false;
     seenTitles.add(cleanTitle);
     return true;
