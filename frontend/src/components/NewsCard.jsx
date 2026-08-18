@@ -70,31 +70,23 @@ export default function NewsCard({ article = {}, onRequireAuth, onSelectChannel 
     if (!dateStr) return '';
     try {
       const date = new Date(dateStr);
-      return date.toLocaleDateString(undefined, {
-        month: 'long',
+      if (isNaN(date.getTime())) return dateStr;
+
+      const formattedDate = date.toLocaleDateString('en-US', {
+        month: 'short',
         day: 'numeric',
         year: 'numeric',
       });
+
+      const formattedTime = date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      });
+
+      return `${formattedDate} • ${formattedTime}`;
     } catch {
       return dateStr;
-    }
-  };
-
-  const getTimeAgo = (dateStr) => {
-    if (!dateStr) return '';
-    try {
-      const now = Date.now();
-      const then = new Date(dateStr).getTime();
-      const diff = now - then;
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      if (hours < 1) return 'Just now';
-      if (hours < 24) return `${hours}h ago`;
-      const days = Math.floor(hours / 24);
-      if (days < 7) return `${days}d ago`;
-      if (days < 30) return `${Math.floor(days / 7)}w ago`;
-      return formatDate(dateStr);
-    } catch {
-      return '';
     }
   };
 
@@ -175,7 +167,7 @@ export default function NewsCard({ article = {}, onRequireAuth, onSelectChannel 
             </div>
             <div style={styles.timeRow}>
               <Clock size={12} style={{ color: 'var(--text-muted)' }} />
-              <span style={styles.timeText}>{getTimeAgo(publishedAt)}</span>
+              <span style={styles.timeText}>{formatDate(publishedAt)}</span>
             </div>
           </div>
 
