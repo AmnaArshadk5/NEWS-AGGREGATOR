@@ -270,6 +270,25 @@ const DIRECT_FEEDS = {
   sports: [
     { url: 'https://rss.nytimes.com/services/xml/rss/nyt/Sports.xml', source: 'The New York Times' },
   ],
+  food: [
+    { url: 'https://rss.nytimes.com/services/xml/rss/nyt/DiningandWine.xml', source: 'The New York Times Dining' },
+  ],
+  travel: [
+    { url: 'https://rss.nytimes.com/services/xml/rss/nyt/Travel.xml', source: 'The New York Times Travel' },
+  ],
+  gaming: [
+    { url: 'https://www.polygon.com/rss/index.xml', source: 'Polygon' },
+    { url: 'https://feeds.ign.com/ign/all', source: 'IGN' },
+  ],
+  fashion: [
+    { url: 'https://rss.nytimes.com/services/xml/rss/nyt/FashionandStyle.xml', source: 'The New York Times Style' },
+  ],
+  education: [
+    { url: 'https://rss.nytimes.com/services/xml/rss/nyt/Education.xml', source: 'The New York Times Education' },
+  ],
+  crypto: [
+    { url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', source: 'CoinDesk' },
+  ],
   gb: [
     { url: 'http://feeds.bbci.co.uk/news/uk/rss.xml', source: 'BBC News UK' },
     { url: 'https://www.theguardian.com/uk/rss', source: 'The Guardian' },
@@ -311,7 +330,8 @@ async function fetchFromDirectPublisherFeeds(category, q, country) {
   } else if (DIRECT_FEEDS[catLower]) {
     targetFeeds = [...DIRECT_FEEDS[catLower]];
   } else {
-    targetFeeds = [...DIRECT_FEEDS.technology];
+    // For custom admin-created categories not explicitly mapped, let Google News RSS handle it dynamically
+    return null;
   }
 
   console.log(`[DirectFeeds] Fetching ${targetFeeds.length} direct feeds for category: ${catLower}, country: ${cLower}`);
