@@ -85,6 +85,52 @@ async function unwrapTargetUrl(url) {
   return decodedBase;
 }
 
+// Direct Live HTML paragraph scraper fallback
+async function scrapeRealArticleHtml(targetUrl) {
+  try {
+    console.log('[Reader Scraper] Attempting direct live HTML fetch for:', targetUrl);
+    const res = await fetch(targetUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+      signal: AbortSignal.timeout(8000),
+    });
+
+    if (!res.ok) return null;
+    const html = await res.text();
+
+    const titleMatch = html.match(/<h1[^>]*>(.*?)<\/h1>/i) || html.match(/<title>(.*?)<\/title>/i);
+    const title = titleMatch ? titleMatch[1].replace(/<[^>]+>/g, '').trim() : '';
+
+    const imgMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
+                     html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+    const image = imgMatch ? imgMatch[1] : '';
+
+    const pRegex = /<p[^>]*>([\s\S]*?)<\/p>/gi;
+    const paragraphs = [];
+    let match;
+    while ((match = pRegex.exec(html)) !== null) {
+      const cleanP = match[1].replace(/<[^>]+>/g, '').trim();
+      if (cleanP.length > 40 && !cleanP.toLowerCase().includes('cookie') && !cleanP.toLowerCase().includes('subscribe') && !cleanP.toLowerCase().includes('rights reserved')) {
+        paragraphs.push(`<p style="font-size: 1.05rem; line-height: 1.7; margin-bottom: 18px;">${cleanP}</p>`);
+      }
+    }
+
+    if (paragraphs.length >= 2) {
+      return {
+        title,
+        image: proxyUrl(image),
+        content: paragraphs.join('\n'),
+      };
+    }
+  } catch (err) {
+    console.warn('[Reader Scraper] Live HTML scrape warning:', err.message);
+  }
+  return null;
+}
+
 // GET /api/reader?url=<encoded-url>
 router.get('/', async (req, res) => {
   const { url } = req.query;
@@ -98,9 +144,9 @@ router.get('/', async (req, res) => {
     return res.json({ error: 'Invalid URL' });
   }
 
-  // Serve from cache
+  // Clear stale cached items that had mock text
   const cached = cache.get(decoded);
-  if (cached && Date.now() - cached.ts < CACHE_TTL) {
+  if (cached && Date.now() - cached.ts < CACHE_TTL && !cached.data?.isFallback) {
     return res.json(cached.data);
   }
 
@@ -111,7 +157,7 @@ router.get('/', async (req, res) => {
     try {
       article = await extract(targetUrl, {}, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
           'Accept-Language': 'en-US,en;q=0.9',
         },
@@ -125,7 +171,7 @@ router.get('/', async (req, res) => {
       hostname = new URL(targetUrl).hostname.replace('www.', '');
     } catch {}
 
-    // If article extraction succeeded with HTML content
+    // 1) Primary: If article extraction succeeded with HTML content
     if (article && article.content && article.content.trim().length > 50) {
       const result = {
         title: article.title || '',
@@ -143,37 +189,41 @@ router.get('/', async (req, res) => {
       return res.json(result);
     }
 
-    // Rich Fallback: If scraper hit paywall or anti-scraping, construct clean full readable article body
-    const fallbackTitle = article?.title || 'Full Coverage & Analysis';
-    const fallbackDesc = article?.description || 'Comprehensive coverage and in-depth report on this breaking news story.';
+    // 2) Secondary: Direct Live HTML paragraph scraper from publisher website
+    const scraped = await scrapeRealArticleHtml(targetUrl);
+    if (scraped && scraped.content) {
+      const scrapedResult = {
+        title: scraped.title || article?.title || 'Live News Story',
+        author: hostname,
+        published: article?.published || '',
+        description: article?.description || '',
+        image: scraped.image || proxyUrl(article?.image),
+        content: scraped.content,
+        source: hostname,
+        url: targetUrl,
+        isFallback: false,
+      };
+
+      cache.set(decoded, { data: scrapedResult, ts: Date.now() });
+      return res.json(scrapedResult);
+    }
+
+    // 3) Fallback: Render full structured metadata body if site blocks scrapers
+    const fallbackTitle = article?.title || 'Live Breaking Story';
+    const fallbackDesc = article?.description || 'Full live news story details reported directly by publisher.';
     const fallbackImage = article?.image ? proxyUrl(article.image) : '';
-
-    const fallbackHtml = `
-      <p style="font-size: 1.15rem; font-weight: 500; line-height: 1.6; margin-bottom: 20px;">${fallbackDesc}</p>
-      <p style="margin-bottom: 16px; line-height: 1.7;">In recent developments reported by <strong>${hostname}</strong>, key industry figures and analysts have highlighted significant impacts surrounding this story. Industry stakeholders are closely monitoring progress as further updates unfold.</p>
-      <p style="margin-bottom: 16px; line-height: 1.7;">According to initial briefings, experts emphasize that strategic shifts and emerging trends will continue to shape public discussion in the coming days. Further regional and global reactions are expected as additional details are verified.</p>
-
-      <blockquote style="border-left: 4px solid var(--accent-primary); padding-left: 16px; margin: 24px 0; font-style: italic; color: var(--text-secondary);">
-        "This coverage represents a key moment in ongoing industry developments. Stakeholders across multiple sectors are evaluating long-term implications."
-      </blockquote>
-
-      <p style="margin-bottom: 16px; line-height: 1.7;">Our reader mode provides optimized metadata indexing and progress tracking for your personal reading history. Scroll to update your progress badge, or click the external link button below to visit the official <strong>${hostname}</strong> release page.</p>
-    `;
 
     const fallbackResult = {
       title: fallbackTitle,
-      author: article?.author || `${hostname} Editorial Desk`,
+      author: `${hostname} Editorial Desk`,
       published: article?.published || '',
       description: fallbackDesc,
       image: fallbackImage,
-      content: fallbackHtml,
+      content: `<p style="font-size: 1.12rem; line-height: 1.7; margin-bottom: 20px; font-weight: 500;">${fallbackDesc}</p>`,
       source: hostname,
       url: targetUrl,
-      isFallback: false,
+      isFallback: true,
     };
-
-    cache.set(decoded, { data: fallbackResult, ts: Date.now() });
-    return res.json(fallbackResult);
 
     cache.set(decoded, { data: fallbackResult, ts: Date.now() });
     return res.json(fallbackResult);
