@@ -245,6 +245,52 @@ function getMockArticles(category, q) {
   return unique;
 }
 
+// ── Live Google News RSS Parser ──
+async function fetchFromGoogleNewsRSS(category, q) {
+  try {
+    const queryTerm = q || category || 'general';
+    const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(queryTerm)}&hl=en-US&gl=US&ceid=US:en`;
+    console.log('[GoogleNewsRSS] Fetching live RSS feed for:', queryTerm);
+
+    const res = await fetch(rssUrl);
+    if (!res.ok) return null;
+    const xml = await res.text();
+
+    const items = [];
+    const itemRegex = /<item>[\s\S]*?<\/item>/g;
+    const matches = xml.match(itemRegex) || [];
+
+    for (const itemXml of matches.slice(0, 30)) {
+      const titleMatch = itemXml.match(/<title>(.*?)<\/title>/);
+      const linkMatch = itemXml.match(/<link>(.*?)<\/link>/);
+      const pubDateMatch = itemXml.match(/<pubDate>(.*?)<\/pubDate>/);
+      const sourceMatch = itemXml.match(/<source[^>]*>(.*?)<\/source>/);
+
+      if (titleMatch && linkMatch) {
+        let cleanTitle = titleMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').replace(/&amp;/g, '&').replace(/&quot;/g, '"').trim();
+        const sourceName = sourceMatch ? sourceMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').trim() : 'Google News';
+        if (cleanTitle.endsWith(` - ${sourceName}`)) {
+          cleanTitle = cleanTitle.substring(0, cleanTitle.lastIndexOf(` - ${sourceName}`));
+        }
+
+        items.push({
+          title: cleanTitle,
+          description: `Latest real-time coverage reported by ${sourceName}. Read full article for complete story details.`,
+          url: linkMatch[1],
+          urlToImage: `https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=800`,
+          publishedAt: pubDateMatch ? new Date(pubDateMatch[1]).toISOString() : new Date().toISOString(),
+          source: { name: sourceName },
+          author: sourceName
+        });
+      }
+    }
+    return items.length > 0 ? items : null;
+  } catch (err) {
+    console.error('[GoogleNewsRSS] Error:', err.message);
+    return null;
+  }
+}
+
 // ── GET /api/news ──
 router.get('/', async (req, res) => {
   const newsApiKey = process.env.NEWS_API_KEY;
@@ -278,7 +324,13 @@ router.get('/', async (req, res) => {
     catch (err) { console.error('[NewsData] Error:', err.message); }
   }
 
-  // 4) Fallback & Padding to guarantee articles per category
+  // 4) Try Live Unlimited Google News RSS Feed
+  if (!articles || articles.length === 0) {
+    try { articles = await fetchFromGoogleNewsRSS(category, q); }
+    catch (err) { console.error('[GoogleNewsRSS] Exception:', err.message); }
+  }
+
+  // 5) Fallback & Padding to guarantee articles per category
   const mockFallback = getMockArticles(category, q);
   if (!articles || !Array.isArray(articles) || articles.length === 0) {
     articles = mockFallback;
@@ -286,7 +338,7 @@ router.get('/', async (req, res) => {
     articles = [...articles, ...mockFallback];
   }
 
-  // 5) Strict Deduplication by normalized title to eliminate any repeating duplicate articles
+  // 6) Strict Deduplication by normalized title to eliminate any repeating duplicate articles
   const seenTitles = new Set();
   articles = articles.filter(item => {
     if (!item || !item.title || item.title === '[Removed]') return false;
