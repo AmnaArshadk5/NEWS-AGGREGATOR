@@ -210,7 +210,9 @@ router.get('/', async (req, res) => {
 
     // 3) Fallback: Render full structured metadata body if site blocks scrapers
     const fallbackTitle = article?.title || 'Live Breaking Story';
-    const fallbackDesc = article?.description || 'Full live news story details reported directly by publisher.';
+    const fallbackDesc = (article?.description && !article.description.includes('reported directly by publisher'))
+      ? article.description
+      : `Latest breaking report and news coverage published by ${hostname}.`;
     const fallbackImage = article?.image ? proxyUrl(article.image) : '';
 
     const fallbackResult = {

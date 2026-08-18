@@ -261,10 +261,19 @@ async function fetchFromGoogleNewsRSS(category, q) {
     const matches = xml.match(itemRegex) || [];
 
     for (const itemXml of matches.slice(0, 30)) {
-      const titleMatch = itemXml.match(/<title>(.*?)<\/title>/);
-      const linkMatch = itemXml.match(/<link>(.*?)<\/link>/);
-      const pubDateMatch = itemXml.match(/<pubDate>(.*?)<\/pubDate>/);
-      const sourceMatch = itemXml.match(/<source[^>]*>(.*?)<\/source>/);
+      const descMatch = itemXml.match(/<description>([\s\S]*?)<\/description>/);
+      let realDesc = '';
+      if (descMatch) {
+        realDesc = descMatch[1]
+          .replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1')
+          .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"')
+          .replace(/<[^>]+>/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+      if (!realDesc || realDesc.length < 15) {
+        realDesc = `Breaking real-time report on "${cleanTitle}" published by ${sourceName}.`;
+      }
 
       if (titleMatch && linkMatch) {
         let cleanTitle = titleMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').replace(/&amp;/g, '&').replace(/&quot;/g, '"').trim();
@@ -275,7 +284,7 @@ async function fetchFromGoogleNewsRSS(category, q) {
 
         items.push({
           title: cleanTitle,
-          description: `Latest real-time coverage reported by ${sourceName}. Read full article for complete story details.`,
+          description: realDesc,
           url: linkMatch[1],
           urlToImage: `https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=800`,
           publishedAt: pubDateMatch ? new Date(pubDateMatch[1]).toISOString() : new Date().toISOString(),
