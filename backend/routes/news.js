@@ -245,12 +245,13 @@ function getMockArticles(category, q) {
   return unique;
 }
 
-// ── Live Google News RSS Parser ──
-async function fetchFromGoogleNewsRSS(category, q) {
+// ── Live Google News RSS Parser with Country Support ──
+async function fetchFromGoogleNewsRSS(category, q, country) {
   try {
     const queryTerm = q || category || 'general';
-    const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(queryTerm)}&hl=en-US&gl=US&ceid=US:en`;
-    console.log('[GoogleNewsRSS] Fetching live RSS feed for:', queryTerm);
+    const countryCode = country ? country.toUpperCase() : 'US';
+    const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(queryTerm)}&hl=en-${countryCode}&gl=${countryCode}&ceid=${countryCode}:en`;
+    console.log(`[GoogleNewsRSS] Fetching live RSS feed for: ${queryTerm} [Country: ${countryCode}]`);
 
     const res = await fetch(rssUrl);
     if (!res.ok) return null;
@@ -261,25 +262,30 @@ async function fetchFromGoogleNewsRSS(category, q) {
     const matches = xml.match(itemRegex) || [];
 
     for (const itemXml of matches.slice(0, 30)) {
+      const titleMatch = itemXml.match(/<title>(.*?)<\/title>/);
+      const linkMatch = itemXml.match(/<link>(.*?)<\/link>/);
+      const pubDateMatch = itemXml.match(/<pubDate>(.*?)<\/pubDate>/);
+      const sourceMatch = itemXml.match(/<source[^>]*>(.*?)<\/source>/);
       const descMatch = itemXml.match(/<description>([\s\S]*?)<\/description>/);
-      let realDesc = '';
-      if (descMatch) {
-        realDesc = descMatch[1]
-          .replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1')
-          .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"')
-          .replace(/<[^>]+>/g, '')
-          .replace(/\s+/g, ' ')
-          .trim();
-      }
-      if (!realDesc || realDesc.length < 15) {
-        realDesc = `Breaking real-time report on "${cleanTitle}" published by ${sourceName}.`;
-      }
 
       if (titleMatch && linkMatch) {
-        let cleanTitle = titleMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').replace(/&amp;/g, '&').replace(/&quot;/g, '"').trim();
         const sourceName = sourceMatch ? sourceMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').trim() : 'Google News';
+        let cleanTitle = titleMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').replace(/&amp;/g, '&').replace(/&quot;/g, '"').trim();
         if (cleanTitle.endsWith(` - ${sourceName}`)) {
           cleanTitle = cleanTitle.substring(0, cleanTitle.lastIndexOf(` - ${sourceName}`));
+        }
+
+        let realDesc = '';
+        if (descMatch) {
+          realDesc = descMatch[1]
+            .replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1')
+            .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"')
+            .replace(/<[^>]+>/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+        }
+        if (!realDesc || realDesc.length < 15) {
+          realDesc = `Breaking live story on "${cleanTitle}" reported by ${sourceName}. Read full article for complete coverage.`;
         }
 
         items.push({
@@ -333,9 +339,9 @@ router.get('/', async (req, res) => {
     catch (err) { console.error('[NewsData] Error:', err.message); }
   }
 
-  // 4) Try Live Unlimited Google News RSS Feed
+  // 4) Try Live Unlimited Google News RSS Feed with Country support
   if (!articles || articles.length === 0) {
-    try { articles = await fetchFromGoogleNewsRSS(category, q); }
+    try { articles = await fetchFromGoogleNewsRSS(category, q, country); }
     catch (err) { console.error('[GoogleNewsRSS] Exception:', err.message); }
   }
 
