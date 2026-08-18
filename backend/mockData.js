@@ -1,4 +1,4 @@
-export const mockNews = {
+const rawMockNews = {
   general: [
     {
       title: "Global Climate Summit Produces Historic 35-Nation Carbon Pact",
@@ -385,3 +385,18 @@ export const mockNews = {
     }
   ]
 };
+
+// Apply realistic staggered publication timestamps across all articles (e.g. 18m ago, 2h ago, 5h ago)
+const applyStaggeredTimestamps = (data) => {
+  const now = Date.now();
+  const processed = {};
+  Object.keys(data).forEach((cat) => {
+    processed[cat] = data[cat].map((art, idx) => ({
+      ...art,
+      publishedAt: new Date(now - (idx * 2.5 + 0.3) * 3600000).toISOString()
+    }));
+  });
+  return processed;
+};
+
+export const mockNews = applyStaggeredTimestamps(rawMockNews);
