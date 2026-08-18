@@ -289,6 +289,12 @@ const DIRECT_FEEDS = {
   crypto: [
     { url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', source: 'CoinDesk' },
   ],
+  pk: [
+    { url: 'https://www.dawn.com/feeds/home', source: 'Dawn News' },
+    { url: 'https://tribune.com.pk/feed/home', source: 'Express Tribune' },
+    { url: 'https://www.thenews.com.pk/rss/1/1', source: 'The News International' },
+    { url: 'https://www.geo.tv/rss/1/1', source: 'Geo News' },
+  ],
   gb: [
     { url: 'http://feeds.bbci.co.uk/news/uk/rss.xml', source: 'BBC News UK' },
     { url: 'https://www.theguardian.com/uk/rss', source: 'The Guardian' },
@@ -320,6 +326,25 @@ const DIRECT_FEEDS = {
   ]
 };
 
+const COUNTRY_NAME_MAP = {
+  pk: 'Pakistan',
+  in: 'India',
+  us: 'United States',
+  gb: 'United Kingdom',
+  ca: 'Canada',
+  au: 'Australia',
+  de: 'Germany',
+  fr: 'France',
+  jp: 'Japan',
+  sa: 'Saudi Arabia',
+  ae: 'UAE',
+  cn: 'China',
+  ru: 'Russia',
+  eg: 'Egypt',
+  za: 'South Africa',
+  br: 'Brazil',
+};
+
 async function fetchFromDirectPublisherFeeds(category, q, country) {
   let targetFeeds = [];
   const cLower = (country || '').toLowerCase();
@@ -330,7 +355,7 @@ async function fetchFromDirectPublisherFeeds(category, q, country) {
   } else if (DIRECT_FEEDS[catLower]) {
     targetFeeds = [...DIRECT_FEEDS[catLower]];
   } else {
-    // For custom admin-created categories not explicitly mapped, let Google News RSS handle it dynamically
+    // For custom admin-created categories or unmapped countries, let Google News RSS handle it dynamically
     return null;
   }
 
@@ -403,8 +428,14 @@ async function fetchFromDirectPublisherFeeds(category, q, country) {
 // ── Live Google News RSS Parser with Country Support ──
 async function fetchFromGoogleNewsRSS(category, q, country) {
   try {
-    const queryTerm = q || category || 'general';
     const countryCode = country ? country.toUpperCase() : 'US';
+    const countryName = COUNTRY_NAME_MAP[country?.toLowerCase()] || '';
+
+    let queryTerm = q || category || 'general';
+    if (countryName && !queryTerm.toLowerCase().includes(countryName.toLowerCase())) {
+      queryTerm = `${queryTerm} ${countryName}`;
+    }
+
     const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(queryTerm)}&hl=en-${countryCode}&gl=${countryCode}&ceid=${countryCode}:en`;
     console.log(`[GoogleNewsRSS] Fetching live RSS feed for: ${queryTerm} [Country: ${countryCode}]`);
 
