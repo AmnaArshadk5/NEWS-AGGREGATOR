@@ -35,9 +35,15 @@ export default function ArticleModal({ article, isOpen, onClose, onProgressUpdat
     setReaderMode(false);
   }, [isOpen, url, userId]);
 
-  // Save progress helper
+  const lastProgressRef = useRef(0);
+  const scrollTickingRef = useRef(false);
+
+  // Save progress helper (only triggers state when percentage changes by at least 3% or reaches 100%)
   const saveProgress = useCallback((pct) => {
     const clamped = Math.min(100, Math.max(0, pct));
+    if (Math.abs(clamped - lastProgressRef.current) < 3 && clamped < 100) return;
+    lastProgressRef.current = clamped;
+
     setReadPercent(clamped);
     if (url) {
       const stored = parseInt(localStorage.getItem(`progress_${userId}_${url}`) || '0', 10);
@@ -59,15 +65,20 @@ export default function ArticleModal({ article, isOpen, onClose, onProgressUpdat
     }
   }, [url, userId, title, description, urlToImage, publishedAt, sourceName, author, onProgressUpdate]);
 
-  // Track scroll inside the reader view
+  // Smooth throttled scroll tracker using requestAnimationFrame
   const handleScroll = useCallback(() => {
-    const el = bodyRef.current;
-    if (!el || !readerMode) return;
-    const { scrollTop, scrollHeight, clientHeight } = el;
-    const scrollable = scrollHeight - clientHeight;
-    if (scrollable <= 0) return;
-    const pct = Math.round((scrollTop / scrollable) * 100);
-    saveProgress(pct);
+    if (scrollTickingRef.current) return;
+    scrollTickingRef.current = true;
+    requestAnimationFrame(() => {
+      scrollTickingRef.current = false;
+      const el = bodyRef.current;
+      if (!el || !readerMode) return;
+      const { scrollTop, scrollHeight, clientHeight } = el;
+      const scrollable = scrollHeight - clientHeight;
+      if (scrollable <= 0) return;
+      const pct = Math.round((scrollTop / scrollable) * 100);
+      saveProgress(pct);
+    });
   }, [readerMode, saveProgress]);
 
   // Fetch article content from backend reader API
@@ -361,7 +372,12 @@ const styles = {
     transition: 'background 0.15s',
   },
   body: {
-    flex: 1, overflowY: 'auto', padding: '28px 32px',
+    flex: 1,
+    overflowY: 'auto',
+    padding: '28px 32px',
+    WebkitOverflowScrolling: 'touch',
+    transform: 'translateZ(0)',
+    willChange: 'scroll-position',
   },
 
   // Default preview
