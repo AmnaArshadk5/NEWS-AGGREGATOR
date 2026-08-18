@@ -245,6 +245,141 @@ function getMockArticles(category, q) {
   return unique;
 }
 
+// ── Direct Live Publisher RSS Feeds Map ──
+const DIRECT_FEEDS = {
+  technology: [
+    { url: 'https://techcrunch.com/feed/', source: 'TechCrunch' },
+    { url: 'https://www.wired.com/feed/rss', source: 'Wired' },
+    { url: 'http://feeds.arstechnica.com/arstechnica/index', source: 'Ars Technica' },
+    { url: 'https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml', source: 'The New York Times' },
+  ],
+  business: [
+    { url: 'https://rss.nytimes.com/services/xml/rss/nyt/Business.xml', source: 'The New York Times' },
+    { url: 'https://techcrunch.com/category/startups/feed/', source: 'TechCrunch Startups' },
+  ],
+  science: [
+    { url: 'https://rss.nytimes.com/services/xml/rss/nyt/Science.xml', source: 'The New York Times' },
+    { url: 'https://www.wired.com/feed/category/science/latest/rss', source: 'Wired Science' },
+  ],
+  entertainment: [
+    { url: 'https://rss.nytimes.com/services/xml/rss/nyt/Arts.xml', source: 'The New York Times' },
+  ],
+  health: [
+    { url: 'https://rss.nytimes.com/services/xml/rss/nyt/Health.xml', source: 'The New York Times' },
+  ],
+  sports: [
+    { url: 'https://rss.nytimes.com/services/xml/rss/nyt/Sports.xml', source: 'The New York Times' },
+  ],
+  gb: [
+    { url: 'http://feeds.bbci.co.uk/news/uk/rss.xml', source: 'BBC News UK' },
+    { url: 'https://www.theguardian.com/uk/rss', source: 'The Guardian' },
+    { url: 'http://feeds.bbci.co.uk/news/technology/rss.xml', source: 'BBC Tech' },
+  ],
+  in: [
+    { url: 'https://feeds.feedburner.com/ndtvnews-india-news', source: 'NDTV News India' },
+    { url: 'https://timesofindia.indiatimes.com/rssfeedstopstories.cms', source: 'Times of India' },
+    { url: 'https://feeds.feedburner.com/ndtvnews-technology-news', source: 'NDTV Tech' },
+  ],
+  ca: [
+    { url: 'https://www.cbc.ca/cbbc/rss/lineup/topstories', source: 'CBC News Canada' },
+  ],
+  au: [
+    { url: 'https://www.abc.net.au/news/feed/51120/rss.xml', source: 'ABC News Australia' },
+  ],
+  us: [
+    { url: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml', source: 'The New York Times' },
+    { url: 'https://feeds.npr.org/1001/rss.xml', source: 'NPR News' },
+  ],
+  de: [
+    { url: 'https://rss.dw.com/xml/rss-de-all', source: 'Deutsche Welle' },
+  ],
+  fr: [
+    { url: 'https://www.lemonde.fr/rss/une.xml', source: 'Le Monde' },
+  ],
+  jp: [
+    { url: 'https://www.japantimes.co.jp/feed', source: 'The Japan Times' },
+  ]
+};
+
+async function fetchFromDirectPublisherFeeds(category, q, country) {
+  let targetFeeds = [];
+  const cLower = (country || '').toLowerCase();
+  const catLower = (category || 'general').toLowerCase();
+
+  if (cLower && DIRECT_FEEDS[cLower]) {
+    targetFeeds = [...DIRECT_FEEDS[cLower]];
+  } else if (DIRECT_FEEDS[catLower]) {
+    targetFeeds = [...DIRECT_FEEDS[catLower]];
+  } else {
+    targetFeeds = [...DIRECT_FEEDS.technology];
+  }
+
+  console.log(`[DirectFeeds] Fetching ${targetFeeds.length} direct feeds for category: ${catLower}, country: ${cLower}`);
+
+  let articles = [];
+  for (const feedObj of targetFeeds) {
+    try {
+      const res = await fetch(feedObj.url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+        },
+        signal: AbortSignal.timeout(6000),
+      });
+      if (!res.ok) continue;
+      const xml = await res.text();
+
+      const itemRegex = /<item>[\s\S]*?<\/item>/g;
+      const matches = xml.match(itemRegex) || [];
+
+      for (const itemXml of matches.slice(0, 15)) {
+        const titleMatch = itemXml.match(/<title>(.*?)<\/title>/);
+        const linkMatch = itemXml.match(/<link>(.*?)<\/link>/);
+        const pubDateMatch = itemXml.match(/<pubDate>(.*?)<\/pubDate>/) || itemXml.match(/<dc:date>(.*?)<\/dc:date>/);
+        const descMatch = itemXml.match(/<description>([\s\S]*?)<\/description>/);
+        const creatorMatch = itemXml.match(/<dc:creator>(.*?)<\/dc:creator>/) || itemXml.match(/<author>(.*?)<\/author>/);
+        const mediaMatch = itemXml.match(/<media:content[^>]+url=["']([^"']+)["']/i) || itemXml.match(/<enclosure[^>]+url=["']([^"']+)["']/i);
+
+        if (titleMatch && linkMatch) {
+          const rawTitle = titleMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').replace(/&amp;/g, '&').replace(/&quot;/g, '"').trim();
+          let directUrl = linkMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').trim();
+          if (directUrl.includes('<')) directUrl = directUrl.replace(/<[^>]+>/g, '').trim();
+
+          let realDesc = '';
+          if (descMatch) {
+            realDesc = descMatch[1]
+              .replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1')
+              .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"')
+              .replace(/<[^>]+>/g, '')
+              .replace(/\s+/g, ' ')
+              .trim();
+          }
+          if (!realDesc || realDesc.length < 15) {
+            realDesc = `Real-time story "${rawTitle}" published by ${feedObj.source}.`;
+          }
+
+          const authorName = creatorMatch ? creatorMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').trim() : feedObj.source;
+          const imageUrl = mediaMatch ? mediaMatch[1] : 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=800';
+
+          articles.push({
+            title: rawTitle,
+            description: realDesc,
+            url: directUrl,
+            urlToImage: imageUrl,
+            publishedAt: pubDateMatch ? new Date(pubDateMatch[1]).toISOString() : new Date().toISOString(),
+            source: { name: feedObj.source },
+            author: authorName,
+          });
+        }
+      }
+    } catch (err) {
+      console.warn(`[DirectFeeds] Error fetching ${feedObj.source}:`, err.message);
+    }
+  }
+
+  return articles.length > 0 ? articles : null;
+}
+
 // ── Live Google News RSS Parser with Country Support ──
 async function fetchFromGoogleNewsRSS(category, q, country) {
   try {
@@ -319,27 +454,40 @@ router.get('/', async (req, res) => {
   const country = req.query.country || '';
   const apiSort = 'publishedAt';
 
+  const reqCacheKey = `news:${category}:${q}:${sortBy}:${year}:${timeframe}:${country}`;
+  const cachedNews = getCached(reqCacheKey);
+  if (cachedNews) {
+    return res.json(cachedNews);
+  }
+
   let articles = null;
 
-  // 1) Try NewsAPI
-  if (newsApiKey) {
+  // 1) Primary: Try Direct Publisher RSS Feeds for 100% direct article URLs and country filtering
+  try {
+    articles = await fetchFromDirectPublisherFeeds(category, q, country);
+  } catch (err) {
+    console.error('[DirectFeeds] Error:', err.message);
+  }
+
+  // 2) Try NewsAPI if Direct Feeds returned empty
+  if ((!articles || articles.length === 0) && newsApiKey) {
     try { articles = await fetchFromNewsAPI(newsApiKey, category, q, apiSort); }
     catch (err) { console.error('[NewsAPI] Error:', err.message); }
   }
 
-  // 2) Try GNews if NewsAPI failed
-  if (!articles && gNewsApiKey) {
+  // 3) Try GNews if both failed
+  if ((!articles || articles.length === 0) && gNewsApiKey) {
     try { articles = await fetchFromGNews(gNewsApiKey, category, q); }
     catch (err) { console.error('[GNews] Error:', err.message); }
   }
 
-  // 3) Try NewsData.io if both failed
-  if (!articles && process.env.NEWSDATA_API_KEY) {
+  // 4) Try NewsData.io if all failed
+  if ((!articles || articles.length === 0) && process.env.NEWSDATA_API_KEY) {
     try { articles = await fetchFromNewsData(process.env.NEWSDATA_API_KEY, category, q, country); }
     catch (err) { console.error('[NewsData] Error:', err.message); }
   }
 
-  // 4) Try Live Unlimited Google News RSS Feed with Country support
+  // 5) Try Live Google News RSS Feed with Country support as fallback
   if (!articles || articles.length === 0) {
     try { articles = await fetchFromGoogleNewsRSS(category, q, country); }
     catch (err) { console.error('[GoogleNewsRSS] Exception:', err.message); }
@@ -367,6 +515,7 @@ router.get('/', async (req, res) => {
   articles = filterByTimeframe(articles, timeframe);
   articles = sortArticles(articles, sortBy);
 
+  setCache(reqCacheKey, articles);
   res.json(articles);
 });
 
