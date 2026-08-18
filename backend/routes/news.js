@@ -401,10 +401,12 @@ async function fetchFromGoogleNewsRSS(category, q, country) {
       const linkMatch = itemXml.match(/<link>(.*?)<\/link>/);
       const pubDateMatch = itemXml.match(/<pubDate>(.*?)<\/pubDate>/);
       const sourceMatch = itemXml.match(/<source[^>]*>(.*?)<\/source>/);
+      const sourceUrlMatch = itemXml.match(/<source\s+url=["']([^"']+)["']/i);
       const descMatch = itemXml.match(/<description>([\s\S]*?)<\/description>/);
 
       if (titleMatch && linkMatch) {
         const sourceName = sourceMatch ? sourceMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').trim() : 'Google News';
+        const targetPublisherUrl = (sourceUrlMatch && sourceUrlMatch[1].startsWith('http')) ? sourceUrlMatch[1] : linkMatch[1];
         let cleanTitle = titleMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').replace(/&amp;/g, '&').replace(/&quot;/g, '"').trim();
         if (cleanTitle.endsWith(` - ${sourceName}`)) {
           cleanTitle = cleanTitle.substring(0, cleanTitle.lastIndexOf(` - ${sourceName}`));
@@ -426,7 +428,7 @@ async function fetchFromGoogleNewsRSS(category, q, country) {
         items.push({
           title: cleanTitle,
           description: realDesc,
-          url: linkMatch[1],
+          url: targetPublisherUrl,
           urlToImage: `https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=800`,
           publishedAt: pubDateMatch ? new Date(pubDateMatch[1]).toISOString() : new Date().toISOString(),
           source: { name: sourceName },

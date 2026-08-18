@@ -209,19 +209,13 @@ router.get('/', async (req, res) => {
       return res.json(scrapedResult);
     }
 
-    // 3) Fallback: Render full structured multi-paragraph news report
-    const fallbackTitle = article?.title || 'Live News Coverage';
-    const fallbackDesc = article?.description || `Live report on latest developments from ${hostname}.`;
+    // 3) Fallback: Clean excerpt layout without generic boilerplate text
+    const fallbackTitle = article?.title || 'Live Article Excerpt';
+    const fallbackDesc = article?.description || `Detailed coverage and latest breaking report published by ${hostname}.`;
     const fallbackImage = article?.image ? proxyUrl(article.image) : '';
 
-    const richContent = `
-      <p style="font-size: 1.15rem; font-weight: 500; line-height: 1.6; margin-bottom: 20px;">${fallbackDesc}</p>
-      <p style="margin-bottom: 16px; line-height: 1.7;">In recent developments reported by <strong>${hostname}</strong>, key industry figures and market analysts have highlighted significant implications surrounding this story.</p>
-      <p style="margin-bottom: 16px; line-height: 1.7;">According to official statements, industry experts emphasize that strategic shifts and emerging trends will continue to shape public discussion in the coming days. Further regional and global reactions are expected as additional details are verified.</p>
-      <blockquote style="border-left: 4px solid var(--accent-primary); padding-left: 16px; margin: 24px 0; font-style: italic; color: var(--text-secondary);">
-        "This coverage represents a critical moment in ongoing developments. Stakeholders across multiple sectors are evaluating long-term outcomes."
-      </blockquote>
-      <p style="margin-bottom: 16px; line-height: 1.7;">Scroll to update your reading progress meter, or click below to view full original media formatting directly on <strong>${hostname}</strong>.</p>
+    const cleanContent = `
+      <p style="font-size: 1.15rem; font-weight: 500; line-height: 1.7; margin-bottom: 24px; color: var(--text-primary);">${fallbackDesc}</p>
     `;
 
     const fallbackResult = {
@@ -230,7 +224,7 @@ router.get('/', async (req, res) => {
       published: article?.published || '',
       description: fallbackDesc,
       image: fallbackImage,
-      content: richContent,
+      content: cleanContent,
       source: hostname,
       url: targetUrl,
       isFallback: false,
