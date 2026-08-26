@@ -270,17 +270,7 @@ export const NotificationProvider = ({ children }) => {
           created_at: new Date().toISOString()
         });
 
-        // Trigger native browser push notification if permitted
-        if ('Notification' in window && Notification.permission === 'granted') {
-          try {
-            new Notification(matchedReason, {
-              body: title,
-              icon: '/favicon.ico'
-            });
-          } catch {
-            // Ignore push errors
-          }
-        }
+        triggerNativeNotification(matchedReason, title);
       }
     });
 
@@ -296,6 +286,35 @@ export const NotificationProvider = ({ children }) => {
       setUnreadCount(prev => prev + newAlerts.length);
     }
   }, [user, token, followedChannels, favoriteCategories, userId]);
+
+  // Register Service Worker for Chrome & cross-browser native push popups
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(err => {
+        console.log('SW registration note:', err.message);
+      });
+    }
+  }, []);
+
+  // Trigger native browser push notification if permitted (Chrome, Edge, Firefox)
+  const triggerNativeNotification = (title, body) => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+        navigator.serviceWorker.ready.then(reg => {
+          reg.showNotification(title, {
+            body,
+            icon: '/favicon.svg',
+            badge: '/favicon.svg',
+            tag: `news_${Date.now()}`
+          });
+        }).catch(() => {
+          try { new Notification(title, { body, icon: '/favicon.svg' }); } catch {}
+        });
+      } else {
+        try { new Notification(title, { body, icon: '/favicon.svg' }); } catch {}
+      }
+    }
+  };
 
   // Real-Time Background Polling Engine (polls every 10 seconds ONLY when user is logged in)
   useEffect(() => {

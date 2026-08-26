@@ -21,6 +21,14 @@ Click the **Authorize** button at the top right and enter your JWT token as: \`B
   },
   servers: [
     {
+      url: '/',
+      description: 'Current Server Environment (Auto-Detect)',
+    },
+    {
+      url: 'https://news-aggregator-ac9t.onrender.com',
+      description: 'Live Production Server (Render Cloud)',
+    },
+    {
       url: 'http://localhost:5000',
       description: 'Local Development Server',
     },

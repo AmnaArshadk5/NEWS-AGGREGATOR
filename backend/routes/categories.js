@@ -1,5 +1,5 @@
 import express from 'express';
-import { allQuery } from '../db.js';
+import { getEnabledCategories } from '../queries.js';
 
 const router = express.Router();
 
@@ -16,9 +16,7 @@ const DEFAULT_CATEGORIES = [
 // GET /api/categories - Public endpoint to retrieve active categories for pill bar
 router.get('/', async (req, res) => {
   try {
-    const categories = await allQuery(
-      'SELECT id, name, slug, sort_order FROM categories WHERE enabled = 1 ORDER BY sort_order ASC, name ASC'
-    );
+    const categories = await getEnabledCategories();
     if (categories && categories.length > 0) {
       return res.json(categories);
     }

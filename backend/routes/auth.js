@@ -1,7 +1,13 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { runQuery, getQuery } from '../db.js';
+import { 
+  findUserByUsername, 
+  findUserById, 
+  getUserCount, 
+  createUser, 
+  updateUserPassword 
+} from '../queries.js';
 import authMiddleware from '../middleware/auth.js';
 import { authLimiter } from '../middleware/rateLimiter.js';
 
@@ -23,13 +29,12 @@ router.post('/register', authLimiter, async (req, res) => {
   }
 
   try {
-    const existingUser = await getQuery('SELECT id FROM users WHERE username = ?', [username.trim()]);
+    const existingUser = await findUserByUsername(username.trim());
     if (existingUser) {
       return res.status(409).json({ error: 'Username is already taken' });
     }
 
-    const userCountRow = await getQuery('SELECT COUNT(*) as count FROM users');
-    const userCount = userCountRow ? parseInt(userCountRow.count, 10) : 0;
+    const userCount = await getUserCount();
     const role = (userCount === 0) ? 'admin' : 'user';
 
     const salt = await bcrypt.genSalt(10);
@@ -39,12 +44,15 @@ router.post('/register', authLimiter, async (req, res) => {
     const mail = email ? email.trim() : null;
     const phone = contactNumber ? contactNumber.trim() : null;
 
-    const result = await runQuery(
-      'INSERT INTO users (username, password_hash, password, first_name, email, contact_number, role) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [username.trim(), passwordHash, passwordHash, fName, mail, phone, role]
-    );
+    const result = await createUser({
+      username: username.trim(),
+      passwordHash,
+      firstName: fName,
+      email: mail,
+      contactNumber: phone,
+      role
+    });
 
-    // JWT token valid for 7 days
     const token = jwt.sign(
       { id: result.id, username: username.trim(), role }, 
       JWT_SECRET, 
@@ -78,7 +86,7 @@ router.post('/login', authLimiter, async (req, res) => {
   }
 
   try {
-    const user = await getQuery('SELECT * FROM users WHERE username = ?', [username.trim()]);
+    const user = await findUserByUsername(username.trim());
     if (!user) {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
@@ -91,7 +99,6 @@ router.post('/login', authLimiter, async (req, res) => {
 
     const userRole = user.role || 'user';
 
-    // JWT token valid for 7 days
     const token = jwt.sign(
       { id: user.id, username: user.username, role: userRole }, 
       JWT_SECRET, 
@@ -119,7 +126,7 @@ router.post('/login', authLimiter, async (req, res) => {
 // GET /api/auth/me
 router.get('/me', authMiddleware, async (req, res) => {
   try {
-    const user = await getQuery('SELECT id, username, first_name, email, contact_number, role, created_at FROM users WHERE id = ?', [req.user.id]);
+    const user = await findUserById(req.user.id);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -153,12 +160,13 @@ router.put('/password', authMiddleware, async (req, res) => {
   }
 
   try {
-    const user = await getQuery('SELECT password_hash FROM users WHERE id = ?', [req.user.id]);
+    const user = await findUserByUsername(req.user.username);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
+    const passHash = user.password_hash || user.password;
+    const isMatch = await bcrypt.compare(currentPassword, passHash);
     if (!isMatch) {
       return res.status(401).json({ error: 'Current password is incorrect' });
     }
@@ -166,7 +174,7 @@ router.put('/password', authMiddleware, async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const newHash = await bcrypt.hash(newPassword, salt);
 
-    await runQuery('UPDATE users SET password_hash = ? WHERE id = ?', [newHash, req.user.id]);
+    await updateUserPassword(req.user.id, newHash);
 
     res.json({ message: 'Password changed successfully' });
   } catch (err) {

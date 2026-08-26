@@ -1,5 +1,14 @@
 import express from 'express';
-import { runQuery, allQuery, getQuery } from '../db.js';
+import { 
+  getAllUsers, 
+  deleteUser, 
+  updateUserRole, 
+  getAllCategories, 
+  createCategory, 
+  deleteCategory,
+  getUserCount 
+} from '../queries.js';
+import { runQuery, getQuery, allQuery } from '../db.js';
 import authMiddleware from '../middleware/auth.js';
 import adminMiddleware from '../middleware/admin.js';
 
@@ -37,10 +46,7 @@ router.delete('/users/:id', async (req, res) => {
   }
 
   try {
-    const result = await runQuery('DELETE FROM users WHERE id = ?', [targetId]);
-    if (result.changes === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+    await deleteUser(targetId);
     res.json({ message: 'User deleted successfully' });
   } catch (err) {
     console.error('Error deleting user:', err);
@@ -62,10 +68,7 @@ router.patch('/users/:id/role', async (req, res) => {
   }
 
   try {
-    const result = await runQuery('UPDATE users SET role = ? WHERE id = ?', [role, targetId]);
-    if (result.changes === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+    await updateUserRole(targetId, role);
     res.json({ message: `User role updated to ${role}` });
   } catch (err) {
     console.error('Error updating user role:', err);
@@ -78,7 +81,7 @@ router.patch('/users/:id/role', async (req, res) => {
 // GET /api/admin/categories - List all categories (including disabled ones)
 router.get('/categories', async (req, res) => {
   try {
-    const categories = await allQuery('SELECT * FROM categories ORDER BY sort_order ASC, name ASC');
+    const categories = await getAllCategories();
     res.json(categories);
   } catch (err) {
     console.error('Error fetching admin categories:', err);
@@ -100,10 +103,7 @@ router.post('/categories', async (req, res) => {
     const maxOrderRow = await getQuery('SELECT MAX(sort_order) as max_order FROM categories');
     const newOrder = (maxOrderRow?.max_order || 0) + 1;
 
-    const result = await runQuery(
-      'INSERT INTO categories (name, slug, sort_order, enabled) VALUES (?, ?, ?, 1)',
-      [name.trim(), cleanSlug, newOrder]
-    );
+    const result = await createCategory(name, cleanSlug, newOrder);
 
     res.status(201).json({
       message: 'Category created successfully',
@@ -154,10 +154,7 @@ router.delete('/categories/:id', async (req, res) => {
   const catId = parseInt(req.params.id, 10);
 
   try {
-    const result = await runQuery('DELETE FROM categories WHERE id = ?', [catId]);
-    if (result.changes === 0) {
-      return res.status(404).json({ error: 'Category not found' });
-    }
+    await deleteCategory(catId);
     res.json({ message: 'Category deleted successfully' });
   } catch (err) {
     console.error('Error deleting category:', err);

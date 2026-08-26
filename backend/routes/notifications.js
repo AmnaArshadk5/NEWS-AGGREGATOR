@@ -1,5 +1,12 @@
 import express from 'express';
-import { runQuery, allQuery } from '../db.js';
+import { 
+  getUserNotifications, 
+  getUnreadNotificationCount, 
+  markAllNotificationsRead, 
+  deleteNotification,
+  clearAllNotifications, 
+  registerPushToken 
+} from '../queries.js';
 import authMiddleware from '../middleware/auth.js';
 
 const router = express.Router();
@@ -10,12 +17,8 @@ router.use(authMiddleware);
 // GET /api/notifications - Get in-app notifications & unread count
 router.get('/', async (req, res) => {
   try {
-    const notifications = await allQuery(
-      'SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 50',
-      [req.user.id]
-    );
-
-    const unreadCount = notifications.filter(n => n.is_read === 0 || n.is_read === false).length;
+    const notifications = await getUserNotifications(req.user.id);
+    const unreadCount = await getUnreadNotificationCount(req.user.id);
 
     res.json({
       notifications,
@@ -30,10 +33,7 @@ router.get('/', async (req, res) => {
 // PUT /api/notifications/read-all - Mark all notifications as read
 router.put('/read-all', async (req, res) => {
   try {
-    await runQuery(
-      'UPDATE notifications SET is_read = 1 WHERE user_id = ?',
-      [req.user.id]
-    );
+    await markAllNotificationsRead(req.user.id);
     res.json({ message: 'All notifications marked as read' });
   } catch (err) {
     console.error('Error marking notifications read:', err);
@@ -45,10 +45,7 @@ router.put('/read-all', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   const targetId = parseInt(req.params.id, 10);
   try {
-    await runQuery(
-      'DELETE FROM notifications WHERE id = ? AND user_id = ?',
-      [targetId, req.user.id]
-    );
+    await deleteNotification(targetId, req.user.id);
     res.json({ message: 'Notification deleted' });
   } catch (err) {
     console.error('Error deleting notification:', err);
@@ -59,10 +56,7 @@ router.delete('/:id', async (req, res) => {
 // DELETE /api/notifications - Clear all notifications
 router.delete('/', async (req, res) => {
   try {
-    await runQuery(
-      'DELETE FROM notifications WHERE user_id = ?',
-      [req.user.id]
-    );
+    await clearAllNotifications(req.user.id);
     res.json({ message: 'All notifications cleared' });
   } catch (err) {
     console.error('Error clearing notifications:', err);
@@ -78,13 +72,10 @@ router.post('/register-token', async (req, res) => {
   }
 
   try {
-    await runQuery(
-      'INSERT INTO user_push_tokens (user_id, fcm_token, device_type) VALUES (?, ?, ?) ON CONFLICT (fcm_token) DO NOTHING',
-      [req.user.id, fcmToken, deviceType || 'web']
-    );
-    res.json({ message: 'Push notification token registered successfully' });
+    await registerPushToken(req.user.id, fcmToken, deviceType || 'web');
+    res.status(201).json({ message: 'Push token registered successfully' });
   } catch (err) {
-    console.error('Error registering FCM token:', err);
+    console.error('Error registering push token:', err);
     res.status(500).json({ error: 'Failed to register push token' });
   }
 });

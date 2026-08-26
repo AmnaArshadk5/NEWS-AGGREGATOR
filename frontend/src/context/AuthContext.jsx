@@ -29,6 +29,15 @@ export const AuthProvider = ({ children }) => {
   const [sessionNotice, setSessionNotice] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Handle session expiration
+  const handleExpiredSession = (message = 'Your session has expired. Redirecting to landing page.') => {
+    sessionStorage.removeItem('news_auth_token');
+    localStorage.removeItem('news_auth_token');
+    setToken(null);
+    setUser(null);
+    setSessionNotice(message);
+  };
+
   // Validate stored token on mount
   useEffect(() => {
     const verifyToken = async () => {
@@ -39,9 +48,7 @@ export const AuthProvider = ({ children }) => {
 
       // 1. Check expiry client-side first — avoids a 403 network request entirely
       if (isTokenExpired(token)) {
-        sessionStorage.removeItem('news_auth_token');
-        setToken(null);
-        setUser(null);
+        handleExpiredSession('Your login session has expired. Please log in again.');
         setLoading(false);
         return;
       }
@@ -57,10 +64,8 @@ export const AuthProvider = ({ children }) => {
           setUser(data.user);
           fetchBookmarks(token);
         } else {
-          // Server rejected it (e.g. JWT_SECRET changed) — clear silently
-          localStorage.removeItem('news_auth_token');
-          setToken(null);
-          setUser(null);
+          // Server rejected it (e.g. 401 Unauthorized / expired token)
+          handleExpiredSession('Session token invalidated. Redirecting to landing page.');
         }
       } catch {
         // Silent catch for token verification network failure
