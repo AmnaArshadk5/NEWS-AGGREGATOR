@@ -41,9 +41,28 @@ export default function PushNotificationBanner() {
     }
   };
 
-  const handleTestAlert = async () => {
+  const handleTestAlert = () => {
+    // 1. Direct synchronous call preserves Chrome User Activation gesture
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const options = {
+        body: 'Google Chrome desktop window notification popup test successful.',
+        icon: '/favicon.svg',
+        badge: '/favicon.svg',
+        tag: `news_${Date.now()}`,
+        requireInteraction: true,
+        silent: false
+      };
+
+      try {
+        new Notification('📰 Live Breaking Story (Chrome Test)', options);
+      } catch (err) {
+        console.warn('Direct Notification call error:', err.message);
+      }
+    }
+
+    // 2. Also trigger context toast and Service Worker fallback
     if (triggerNativeNotification) {
-      await triggerNativeNotification('📰 Live Breaking Story (Chrome Test)', 'Google Chrome desktop window notification popup test successful.');
+      triggerNativeNotification('📰 Live Breaking Story (Chrome Test)', 'Google Chrome desktop window notification popup test successful.');
     }
   };
 
