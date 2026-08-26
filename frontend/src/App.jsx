@@ -249,10 +249,21 @@ const fetchNews = useCallback(async (forceRefresh = false) => {
     if (timeframe) params.set('timeframe', timeframe);
     if (selectedCountry) params.set('country', selectedCountry);
 
-    const response = await fetch(`${API_BASE_URL}/news?${params.toString()}`);
+    let response = null;
+    let retries = 2;
+    while (retries >= 0) {
+      try {
+        response = await fetch(`${API_BASE_URL}/news?${params.toString()}`);
+        if (response && response.ok) break;
+      } catch (fetchErr) {
+        if (retries === 0) throw fetchErr;
+        await new Promise(r => setTimeout(r, 2500));
+      }
+      retries--;
+    }
 
-    if (!response.ok) {
-      throw new Error('Failed to retrieve news. Please ensure the server is running.');
+    if (!response || !response.ok) {
+      throw new Error('Server cold-start in progress. Please refresh in a few seconds.');
     }
 
     const data = await response.json();
