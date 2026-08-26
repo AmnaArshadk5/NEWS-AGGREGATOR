@@ -60,6 +60,7 @@ export default function PushNotificationBanner() {
 
     if (currentPerm === 'denied') {
       setDiagMsg('❌ Chrome Permission is BLOCKED. Click the 🔒 Lock icon next to the URL address bar ➔ Set Notifications to ALLOW ➔ Refresh page.');
+      window.alert('❌ Chrome Notifications are BLOCKED for this site.\n\nTo fix:\n1. Click the Lock 🔒 icon in Chrome URL bar.\n2. Change Notifications to ALLOW.\n3. Refresh page.');
       return;
     }
 
@@ -68,7 +69,7 @@ export default function PushNotificationBanner() {
       return;
     }
 
-    setDiagMsg('🚀 Fired Chrome Native Notification. (If banner does not slide out, check Windows Focus Assist / Do Not Disturb).');
+    setDiagMsg('🚀 Fired Chrome Notification Popup & In-App Desktop Window!');
 
     // 1. Direct synchronous call preserves Chrome User Activation gesture
     if ('Notification' in window && Notification.permission === 'granted') {
@@ -88,10 +89,15 @@ export default function PushNotificationBanner() {
       }
     }
 
-    // 2. Also trigger context toast and Service Worker fallback
+    // 2. Trigger in-app desktop floating popup card
     if (triggerNativeNotification) {
       triggerNativeNotification('📰 Live Breaking Story (Chrome Test)', 'Google Chrome desktop window notification popup test successful.');
     }
+
+    // 3. Fallback explicit browser popup dialog to confirm action
+    setTimeout(() => {
+      window.alert('🔔 Chrome Alert Test Executed!\n\nIf native Windows OS popups did not appear, check Windows Focus Assist / Do Not Disturb in your Windows Taskbar.');
+    }, 300);
   };
 
   const handleDismiss = () => {
