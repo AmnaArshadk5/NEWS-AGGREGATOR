@@ -297,8 +297,27 @@ export const NotificationProvider = ({ children }) => {
   }, []);
 
   // Trigger native browser push notification if permitted (Chrome, Edge, Firefox)
-  const triggerNativeNotification = (title, body) => {
-    if ('Notification' in window && Notification.permission === 'granted') {
+  const triggerNativeNotification = async (title, body) => {
+    // 1. Always show in-app toast banner for instant UI confirmation
+    setActiveToast({
+      id: Date.now(),
+      title: title || 'Live Breaking Story',
+      message: body || 'Google Chrome notification test successful.',
+      created_at: new Date().toISOString()
+    });
+
+    if (!('Notification' in window)) return;
+
+    let permission = Notification.permission;
+    if (permission === 'default') {
+      try {
+        permission = await Notification.requestPermission();
+      } catch (e) {
+        console.warn('Notification permission error:', e.message);
+      }
+    }
+
+    if (permission === 'granted') {
       const options = {
         body: body || 'Breaking news alert from The Daily Wire.',
         icon: '/favicon.svg',
@@ -308,14 +327,19 @@ export const NotificationProvider = ({ children }) => {
         silent: false
       };
 
-      if (navigator.serviceWorker && navigator.serviceWorker.ready) {
-        navigator.serviceWorker.ready.then(reg => {
-          reg.showNotification(title, options);
-        }).catch(() => {
-          try { new Notification(title, options); } catch {}
-        });
-      } else {
-        try { new Notification(title, options); } catch {}
+      try {
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          const reg = await navigator.serviceWorker.ready;
+          await reg.showNotification(title, options);
+        } else {
+          new Notification(title, options);
+        }
+      } catch (err) {
+        try {
+          new Notification(title, { body: body || 'Live news update' });
+        } catch (e) {
+          console.warn('Native notification suppressed by browser settings:', e.message);
+        }
       }
     }
   };

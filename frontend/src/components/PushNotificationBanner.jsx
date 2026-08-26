@@ -41,9 +41,9 @@ export default function PushNotificationBanner() {
     }
   };
 
-  const handleTestAlert = () => {
+  const handleTestAlert = async () => {
     if (triggerNativeNotification) {
-      triggerNativeNotification('📰 Live Breaking Story (Chrome Test)', 'Google Chrome desktop window notification popup test successful.');
+      await triggerNativeNotification('📰 Live Breaking Story (Chrome Test)', 'Google Chrome desktop window notification popup test successful.');
     }
   };
 
