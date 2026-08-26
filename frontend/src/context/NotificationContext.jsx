@@ -328,17 +328,19 @@ export const NotificationProvider = ({ children }) => {
       };
 
       try {
-        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-          const reg = await navigator.serviceWorker.ready;
-          await reg.showNotification(title, options);
-        } else {
-          new Notification(title, options);
+        if ('serviceWorker' in navigator) {
+          const reg = (await navigator.serviceWorker.getRegistration()) || (await navigator.serviceWorker.ready);
+          if (reg && reg.showNotification) {
+            await reg.showNotification(title, options);
+            return;
+          }
         }
+        new Notification(title, options);
       } catch (err) {
         try {
           new Notification(title, { body: body || 'Live news update' });
         } catch (e) {
-          console.warn('Native notification suppressed by browser settings:', e.message);
+          console.warn('Native notification error:', e.message);
         }
       }
     }
