@@ -5,12 +5,11 @@ import { Bell, X, ShieldCheck } from 'lucide-react';
 
 export default function PushNotificationBanner() {
   const { user } = useAuth();
-  const { registerPushToken } = useNotifications();
+  const { registerPushToken, triggerNativeNotification } = useNotifications();
   const [showBanner, setShowBanner] = useState(false);
   const [granted, setGranted] = useState(false);
 
   useEffect(() => {
-    // Only show to logged-in users whose browser supports Notification API
     if (user && 'Notification' in window) {
       if (Notification.permission === 'default' && !localStorage.getItem('push_banner_dismissed')) {
         setShowBanner(true);
@@ -27,10 +26,12 @@ export default function PushNotificationBanner() {
       if (permission === 'granted') {
         setShowBanner(false);
         setGranted(true);
-        // Simulate FCM Web Push token registration
         const mockToken = `fcm_web_${user?.id}_${Date.now()}`;
         if (registerPushToken) {
           await registerPushToken(mockToken);
+        }
+        if (triggerNativeNotification) {
+          triggerNativeNotification('🚨 Chrome Alerts Activated!', 'Desktop notifications are active for Google Chrome & Windows Action Center.');
         }
       } else {
         setShowBanner(false);
@@ -40,12 +41,38 @@ export default function PushNotificationBanner() {
     }
   };
 
+  const handleTestAlert = () => {
+    if (triggerNativeNotification) {
+      triggerNativeNotification('📰 Live Breaking Story (Chrome Test)', 'Google Chrome desktop window notification popup test successful.');
+    }
+  };
+
   const handleDismiss = () => {
     localStorage.setItem('push_banner_dismissed', 'true');
     setShowBanner(false);
   };
 
-  if (!showBanner) return null;
+  if (!user || (!showBanner && !granted)) return null;
+
+  if (granted && !showBanner) {
+    return (
+      <div style={styles.miniBanner}>
+        <div style={styles.inner}>
+          <div style={styles.iconWrap}>
+            <Bell size={16} color="#10b981" />
+          </div>
+          <div style={styles.textWrap}>
+            <span style={styles.miniTitle}>Chrome Notifications Active</span>
+            <span style={styles.subtitle}>Desktop popups enabled for followed channels & categories.</span>
+          </div>
+          <button onClick={handleTestAlert} style={styles.testBtn}>
+            <Bell size={13} />
+            <span>Test Chrome Alert</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.banner}>
@@ -79,6 +106,32 @@ const styles = {
     boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
     position: 'relative',
     zIndex: 90,
+  },
+  miniBanner: {
+    backgroundColor: 'rgba(16, 185, 129, 0.06)',
+    borderBottom: '1px solid rgba(16, 185, 129, 0.2)',
+    padding: '8px 16px',
+    position: 'relative',
+    zIndex: 90,
+  },
+  miniTitle: {
+    fontWeight: '700',
+    fontSize: '0.84rem',
+    color: '#059669',
+  },
+  testBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '5px 12px',
+    borderRadius: 'var(--radius-full)',
+    backgroundColor: '#10b981',
+    color: '#fff',
+    border: 'none',
+    fontWeight: '600',
+    fontSize: '0.78rem',
+    cursor: 'pointer',
+    transition: 'transform 0.15s ease',
   },
   inner: {
     maxWidth: '1200px',

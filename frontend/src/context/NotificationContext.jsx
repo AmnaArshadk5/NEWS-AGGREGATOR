@@ -299,19 +299,23 @@ export const NotificationProvider = ({ children }) => {
   // Trigger native browser push notification if permitted (Chrome, Edge, Firefox)
   const triggerNativeNotification = (title, body) => {
     if ('Notification' in window && Notification.permission === 'granted') {
+      const options = {
+        body: body || 'Breaking news alert from The Daily Wire.',
+        icon: '/favicon.svg',
+        badge: '/favicon.svg',
+        tag: `news_${Date.now()}`,
+        requireInteraction: true,
+        silent: false
+      };
+
       if (navigator.serviceWorker && navigator.serviceWorker.ready) {
         navigator.serviceWorker.ready.then(reg => {
-          reg.showNotification(title, {
-            body,
-            icon: '/favicon.svg',
-            badge: '/favicon.svg',
-            tag: `news_${Date.now()}`
-          });
+          reg.showNotification(title, options);
         }).catch(() => {
-          try { new Notification(title, { body, icon: '/favicon.svg' }); } catch {}
+          try { new Notification(title, options); } catch {}
         });
       } else {
-        try { new Notification(title, { body, icon: '/favicon.svg' }); } catch {}
+        try { new Notification(title, options); } catch {}
       }
     }
   };
@@ -329,8 +333,8 @@ export const NotificationProvider = ({ children }) => {
             processLiveArticleNotifications(latest);
           }
         }
-      } catch {
-        // Silent catch for background polling
+      } catch (err) {
+        console.error('Error in background notification polling:', err);
       }
     }, 10000);
 
@@ -352,6 +356,7 @@ export const NotificationProvider = ({ children }) => {
       toggleFavoriteCategory,
       isCategoryFavorite,
       processLiveArticleNotifications,
+      triggerNativeNotification,
       markAllAsRead,
       clearAllNotifications,
       registerPushToken,
